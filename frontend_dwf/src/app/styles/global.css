@@ -1,0 +1,29 @@
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary-color);
+}
+
+/* Clases de utilidad que podrías usar en múltiples componentes */
+.text-center {
+  text-align: center;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.items-center {
+  align-items: center;
+}
+
+/* Transición global para elementos interactivos */
+a, button, input, select {
+  transition: all 0.3s ease;
+}
