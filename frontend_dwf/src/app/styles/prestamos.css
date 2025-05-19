@@ -70,7 +70,16 @@ body, html {
 
 /* Campos de entrada */
 .form-control {
-  width: 100%;
+  width: 70%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 0.9rem;
+  height: 32px;
+}
+
+.form-control-cant {
+  width: 85%;
   padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 3px;

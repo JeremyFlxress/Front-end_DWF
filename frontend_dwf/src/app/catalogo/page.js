@@ -7,28 +7,42 @@ import '../styles/catalogo.css';
 
 export default function Catalogo() {
   const router = useRouter();
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
   
-  // Sample data - this would come from an API in production
-  const librosData = [
-    { codigo: 'P24001', titulo: 'Libro 1', autor: 'Autor 1', cantidad: 2, categoria: 'Novela', disponibilidad: 'Disponible' },
-    { codigo: 'P24001', titulo: 'Libro 2', autor: 'Autor 2', cantidad: 15, categoria: 'Infantil', disponibilidad: 'Disponible' },
-    { codigo: 'P24001', titulo: 'Libro 3', autor: 'Autor 3', cantidad: 24, categoria: 'Novela', disponibilidad: 'Disponible' },
-    { codigo: 'P24001', titulo: 'Libro 4', autor: 'Autor 4', cantidad: 23, categoria: 'Clasico', disponibilidad: 'Disponible' },
-    { codigo: 'P24001', titulo: 'Libro 5', autor: 'Autor 5', cantidad: 12, categoria: 'Historia', disponibilidad: 'Disponible' },
-    { codigo: 'P24001', titulo: 'Libro 6', autor: 'Autor 6', cantidad: 4, categoria: 'Literatura', disponibilidad: 'Disponible' },
-    { codigo: 'P24001', titulo: 'Libro 7', autor: 'Autor 7', cantidad: 65, categoria: 'Clasico', disponibilidad: 'Disponible' },
-  ];
+  // Datos de ejemplo
+  const [librosData, setLibrosData] = useState([
+    { codigo: 'AEP4001', titulo: 'Alicia en el país de las maravillas', autor: 'Autor 1', cantidad: 15, categoria: 'Ciencia Ficcion', disponibilidad: 'Disponible' },
+    { codigo: 'P24002', titulo: 'Libro 2', autor: 'Autor 2', cantidad: 15, categoria: 'Infantil', disponibilidad: 'No Disponible' },
+    { codigo: 'P24003', titulo: 'Libro 3', autor: 'Autor 3', cantidad: 24, categoria: 'Novela', disponibilidad: 'Disponible' },
+  ]);
 
   const handleNuevoLibro = () => {
     router.push('/nuevo-libro');
   };
 
   const handleEdit = (codigo) => {
-    console.log(`Editar libro con código: ${codigo}`);
+    router.push('/editar-libro');
   };
 
-  const handleDelete = (codigo) => {
-    console.log(`Eliminar libro con código: ${codigo}`);
+  const handleChangeStatus = (libro) => {
+    setSelectedBook(libro);
+    setShowConfirmDialog(true);
+  };
+
+  const confirmStatusChange = () => {
+    if (selectedBook) {
+      setLibrosData(librosData.map(libro => 
+        libro.codigo === selectedBook.codigo
+          ? { 
+              ...libro, 
+              disponibilidad: libro.disponibilidad === 'Disponible' ? 'No Disponible' : 'Disponible'
+            }
+          : libro
+      ));
+    }
+    setShowConfirmDialog(false);
+    setSelectedBook(null);
   };
 
   return (
@@ -39,7 +53,7 @@ export default function Catalogo() {
         <Header />
         
         <div className="catalogo-container">
-          <h2 className="section-title">Catalogo de Libros</h2>
+          <h2 className="section-title">Catálogo de Libros</h2>
           
           <div className="panel-container">
             <div className="search-container">
@@ -47,12 +61,11 @@ export default function Catalogo() {
                 type="text" 
                 placeholder="Buscar libro"
                 className="search-input"
-              />
-              <button 
+              />              <button 
                 className="btn-nuevo-libro"
                 onClick={handleNuevoLibro}
               >
-                + Nuevo Libro
+                <span className="plus-icon">+</span> Nuevo Libro
               </button>
             </div>
             
@@ -69,15 +82,15 @@ export default function Catalogo() {
                 </tr>
               </thead>
               <tbody>
-                {librosData.map((libro, index) => (
-                  <tr key={index}>
+                {librosData.map((libro) => (
+                  <tr key={libro.codigo}>
                     <td>{libro.codigo}</td>
                     <td>{libro.titulo}</td>
                     <td>{libro.autor}</td>
                     <td>{libro.cantidad}</td>
                     <td>{libro.categoria}</td>
                     <td>
-                      <span className="estado-disponible">
+                      <span className={`estado-${libro.disponibilidad.toLowerCase().replace(' ', '-')}`}>
                         {libro.disponibilidad}
                       </span>
                     </td>
@@ -85,14 +98,16 @@ export default function Catalogo() {
                       <button 
                         className="btn-editar"
                         onClick={() => handleEdit(libro.codigo)}
+                        title="Editar cantidad"
                       >
                         ✎
                       </button>
                       <button 
-                        className="btn-eliminar"
-                        onClick={() => handleDelete(libro.codigo)}
+                        className={`btn-toggle-status ${libro.disponibilidad === 'Disponible' ? 'disponible' : 'no-disponible'}`}
+                        onClick={() => handleChangeStatus(libro)}
+                        title={`Cambiar a ${libro.disponibilidad === 'Disponible' ? 'No Disponible' : 'Disponible'}`}
                       >
-                        ×
+                        {libro.disponibilidad === 'Disponible' ? '✓' : '×'}
                       </button>
                     </td>
                   </tr>
@@ -101,6 +116,40 @@ export default function Catalogo() {
             </table>
           </div>
         </div>
+
+        {/* Diálogo de confirmación */}
+        {showConfirmDialog && (
+          <div className="dialog-overlay">
+            <div className="dialog-content">
+              <div className="dialog-header">
+                <h3>Confirmar cambio de estado</h3>
+              </div>
+              <div className="dialog-body">
+                <p>
+                  ¿Está seguro que quiere cambiar el estado del libro &quot;{selectedBook?.titulo}&quot; a 
+                  {selectedBook?.disponibilidad === 'Disponible' ? ' No Disponible' : ' Disponible'}?
+                </p>
+              </div>
+              <div className="dialog-buttons">
+                <button 
+                  className="btn-confirmar"
+                  onClick={confirmStatusChange}
+                >
+                  Aceptar
+                </button>
+                <button 
+                  className="btn-cancelar"
+                  onClick={() => {
+                    setShowConfirmDialog(false);
+                    setSelectedBook(null);
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

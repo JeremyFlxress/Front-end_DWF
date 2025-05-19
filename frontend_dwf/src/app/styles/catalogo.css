@@ -7,8 +7,8 @@
 
 .search-container {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-bottom: 20px;
 }
 
@@ -21,17 +21,28 @@
 }
 
 .btn-nuevo-libro {
-  background-color: #4A90E2;
+  background-color: #4285f4;
+  min-width: 120px;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 15px;
   cursor: pointer;
-  font-weight: 500;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.btn-nuevo-libro .plus-icon {
+  font-weight: bold;
+  font-size: 16px;
 }
 
 .btn-nuevo-libro:hover {
-  background-color: #357ABD;
+  background-color: #3367d6;
 }
 
 .tabla-catalogo {
@@ -56,13 +67,22 @@
   border-bottom: 1px solid #eee;
   color: #555;
 }
-r
+
 .tabla-catalogo tr:hover {
   background-color: #f8f9fa;
 }
 
+/* Estilos para estados */
 .estado-disponible {
-  background-color: #28a745;
+  background-color: #4CAF50;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.estado-no-disponible {
+  background-color: #f44336;
   color: white;
   padding: 4px 8px;
   border-radius: 4px;
@@ -110,4 +130,100 @@ r
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 15px;
   max-width: 100%;
+}
+
+/* Botón de cambio de estado */
+.btn-toggle-status {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.btn-toggle-status.disponible {
+  color: #4CAF50;
+}
+
+.btn-toggle-status.no-disponible {
+  color: #f44336;
+}
+
+.btn-toggle-status:hover {
+  background-color: #f5f5f5;
+}
+
+/* Estilos para el diálogo de confirmación */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.dialog-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dialog-content h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.dialog-content p {
+  margin: 0 0 24px 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-confirmar {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-confirmar:hover {
+  background-color: #45a049;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dialog-content {
+    margin: 20px;
+    max-width: calc(100% - 40px);
+  }
+  
+  .dialog-buttons {
+    flex-direction: column;
+  }
+  
+  .btn-confirmar,
+  .btn-cancelar {
+    width: 100%;
+  }
 }

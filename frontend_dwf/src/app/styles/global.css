@@ -2,6 +2,10 @@ input:focus, select:focus, textarea:focus {
   border-color: var(--primary-color);
 }
 
+*{
+  font-family: Arial, Helvetica, sans-serif;
+}
+
 /* Clases de utilidad que podrías usar en múltiples componentes */
 .text-center {
   text-align: center;

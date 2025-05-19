@@ -142,7 +142,7 @@ export default function PrestamoForm() {
                       placeholder="dd/mm/aaaa"
                       value={formData.fechaDevolucion}
                       onChange={handleChange}
-                      className="form-control"
+                      className="form-control-cant"
                     />
                   </div>
                 </div>
