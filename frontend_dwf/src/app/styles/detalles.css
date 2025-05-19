@@ -1,0 +1,188 @@
+/* Estilos generales */
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.detalles-container {
+  display: flex;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* Contenido principal */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contenido específico de detalles */
+.detalles-content {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Título de la sección */
+.section-title {
+  color: #333;
+  font-size: 1.25rem;
+  margin-bottom: 20px;
+  font-weight: 500;
+  text-align: center;
+  width: 100%;
+}
+
+/* Contenedor de detalles */
+.details-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 90%;
+  max-width: 450px;
+  margin-bottom: 20px;
+}
+
+/* Detalles del préstamo */
+.prestamo-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Filas de detalles */
+.detail-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+/* Etiquetas de detalles */
+.detail-label {
+  font-weight: bold;
+  color: #333;
+  font-size: 0.9rem;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+/* Valores de detalles */
+.detail-value {
+  color: #444;
+  font-size: 0.9rem;
+}
+
+/* Fila de fechas */
+.dates-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.date-detail {
+  display: flex;
+  align-items: center;
+}
+
+.date-detail .detail-label {
+  width: auto;
+  margin-right: 5px;
+}
+
+/* Fila de estado */
+.status-row {
+  display: flex;
+  align-items: center;
+}
+
+.status-badge-container {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Badge de estado */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+  text-align: center;
+}
+
+/* Colores de estados */
+.entregado {
+  background-color: #28a745;
+}
+
+.pendiente {
+  background-color: #ffc107;
+}
+
+.atrasado {
+  background-color: #dc3545;
+}
+
+/* Botones de acción */
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+  gap: 10px;
+}
+
+.renovar-button, .eliminar-button {
+  padding: 6px 20px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.renovar-button {
+  background-color: #4a77e5;
+}
+
+.eliminar-button {
+  background-color: #dc3545;
+}
+
+/* Botones inferiores */
+.bottom-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+  width: 90%;
+  max-width: 450px;
+}
+
+.aplicar-button, .cancelar-button {
+  padding: 8px 20px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 0.9rem;
+  width: 80px;
+}
+
+.aplicar-button {
+  background-color: #4a77e5;
+}
+
+.cancelar-button {
+  background-color: #dc3545;
+}

@@ -1,21 +1,23 @@
 'use client';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 
 export default function LibrosActivos() {
   const [filtroEstado, setFiltroEstado] = useState('Atrasados');
   const [filtroMes, setFiltroMes] = useState('Marzo');
+  const router = useRouter();
   
   // Datos de ejemplo - estos podrían venir de una API o props
   const librosData = [
     { id: 'P24001', titulo: 'Libro 1', estudiante: 'Estudiante 1', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado' },
-    { id: 'P24001', titulo: 'Libro 2', estudiante: 'Estudiante 2', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Pendiente' },
-    { id: 'P24001', titulo: 'Libro 3', estudiante: 'Estudiante 3', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Atrasado' },
-    { id: 'P24001', titulo: 'Libro 4', estudiante: 'Estudiante 4', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado' },
-    { id: 'P24001', titulo: 'Libro 5', estudiante: 'Estudiante 5', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado' },
-    { id: 'P24001', titulo: 'Libro 6', estudiante: 'Estudiante 6', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado' },
-    { id: 'P24001', titulo: 'Libro 7', estudiante: 'Estudiante 7', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Pendiente' },
+    { id: 'P24002', titulo: 'Libro 2', estudiante: 'Estudiante 2', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Pendiente' },
+    { id: 'P24003', titulo: 'Libro 3', estudiante: 'Estudiante 3', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Atrasado' },
+    { id: 'P24004', titulo: 'Libro 4', estudiante: 'Estudiante 4', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado' },
+    { id: 'P24005', titulo: 'Libro 5', estudiante: 'Estudiante 5', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado' },
+    { id: 'P24006', titulo: 'Libro 6', estudiante: 'Estudiante 6', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado' },
+    { id: 'P24007', titulo: 'Libro 7', estudiante: 'Estudiante 7', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Pendiente' },
   ];
 
   const handleExportar = () => {
@@ -23,7 +25,7 @@ export default function LibrosActivos() {
   };
 
   const handleVerLibro = (id) => {
-    console.log(`Ver detalles del libro con ID: ${id}`);
+    router.push(`/detalles`);
   };
 
   // Función para determinar la clase de estado
@@ -65,17 +67,17 @@ export default function LibrosActivos() {
                   onChange={(e) => setFiltroMes(e.target.value)}
                 >
                   <option>Enero</option>  
-                    <option>Febrero</option>
-                    <option>Marzo</option>
-                    <option>Abril</option>
-                    <option>Mayo</option>
-                    <option>Junio</option>
-                    <option>Julio</option>
-                    <option>Agosto</option>
-                    <option>Septiembre</option>
-                    <option>Octubre</option>
-                    <option>Noviembre</option>
-                    <option>Diciembre</option>
+                  <option>Febrero</option>
+                  <option>Marzo</option>
+                  <option>Abril</option>
+                  <option>Mayo</option>
+                  <option>Junio</option>
+                  <option>Julio</option>
+                  <option>Agosto</option>
+                  <option>Septiembre</option>
+                  <option>Octubre</option>
+                  <option>Noviembre</option>
+                  <option>Diciembre</option>
                 </select>
               </div>
               
