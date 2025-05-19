@@ -1,0 +1,188 @@
+/* Estilos para Registro General - Alineado con Libros Activos */
+
+/* Layout principal de la aplicación */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Contenedor de la barra lateral */
+.sidebar-wrapper {
+  width: 190px;
+  min-width: 190px;
+  background-color: white;
+  border-right: 1px solid #e0e0e0;
+}
+
+/* Contenedor del contenido principal */
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f7;
+}
+
+/* Contenedor principal de Registro General - Mismo que Libros Activos */
+.registro-general-container {
+  padding: 15px 20px;
+  flex: 1;
+  overflow-y: auto;
+  height: calc(100vh - 60px); /* Igual que en Libros Activos */
+}
+
+/* Título de la sección - Mismo que Libros Activos */
+.section-title {
+  color: #0f4c81;
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+  font-weight: 500;
+}
+
+/* Panel principal - Mismo que Libros Activos */
+.panel-container {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  max-width: 100%;
+}
+
+/* Filtros superiores - Mismo que Libros Activos */
+.filtros-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eeeeee;
+}
+
+/* Grupo de filtros - Agregado como en Libros Activos */
+.filtros-grupo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Etiquetas de filtros - Agregado como en Libros Activos */
+.filter-label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* Contenedor de búsqueda */
+.search-container {
+  flex-grow: 1;
+  max-width: 300px;
+}
+
+/* Input de búsqueda */
+.input-busqueda {
+  width: 100%;
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Botón de filtro "Atrasados" - Agregado como en Libros Activos */
+.btn-filtro-atrasados {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 15px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* Selector de mes - Agregado como en Libros Activos */
+.select-mes {
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+}
+
+/* Botón de exportar - Ajustado a Libros Activos */
+.btn-exportar {
+  background-color: #1a4e8e;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 5px 15px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+/* Icono de exportación */
+.exportar-icon {
+  font-size: 0.9rem;
+}
+
+/* Botón Ver - Agregado como en Libros Activos */
+.btn-ver {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 15px;
+  padding: 3px 15px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* Tabla de registros - Ajustada para coincidir con tabla-libros */
+.tabla-registro {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+/* Encabezados de la tabla - Mismo que Libros Activos */
+.tabla-registro th {
+  background-color: #f4f4f4;
+  color: #333;
+  text-align: left;
+  padding: 8px 12px;
+  font-weight: 500;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Celdas de la tabla - Mismo que Libros Activos */
+.tabla-registro td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  color: #555;
+}
+
+/* Alineación para la columna de acciones - Agregado como en Libros Activos */
+.col-acciones {
+  text-align: center;
+}
+
+/* Estado entregado */
+.estado-entregado {
+  color: #2ecc71;
+}
+
+/* Estado pendiente */
+.estado-pendiente {
+  color: #7f8c8d;
+}
+
+/* Estado atrasado */
+.estado-atrasado {
+  color: #e74c3c;
+}
+
+/* Estilo para filas alternas de la tabla */
+.tabla-registro tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}

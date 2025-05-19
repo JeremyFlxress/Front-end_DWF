@@ -12,7 +12,7 @@ const Sidebar = () => {
     { name: 'Prestamo', path: '/prestamo', icon: 'book-open' },
     { name: 'Catalogo', path: '/catalogo', icon: 'list' },
     { name: 'Libros Activos', path: '/librosactivos', icon: 'book' },
-    { name: 'Registro General', path: '/registro', icon: 'clipboard' },
+    { name: 'Registro General', path: '/registro-general', icon: 'clipboard' },
     { name: 'Reportes', path: '/reportes', icon: 'file-text' },
   ];
 

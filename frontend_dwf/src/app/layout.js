@@ -3,6 +3,8 @@ import './styles/login.css';
 import './styles/dashboard.css';
 import './styles/prestamos.css';
 import './styles/librosactivos.css';
+import './styles/registroGeneral.css';
+import './styles/reportes.css';
 
 export const metadata = {
   title: 'Sistema ¡SUPÉRATE!',

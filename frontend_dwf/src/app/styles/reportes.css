@@ -1,0 +1,163 @@
+/* styles/reportes.css */
+
+/* Estilos específicos para la página de reportes */
+.reportes-filters {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.filter-group label {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  font-size: 14px;
+  color: #333;
+}
+
+.filter-button {
+  padding: 9px 15px;
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.filter-button:hover {
+  background-color: #004494;
+}
+
+/* Estilos para las tarjetas de estadísticas */
+.cards-container {
+  margin-bottom: 20px;
+}
+
+/* Estilos para la tabla de reportes */
+.activity-section {
+  margin-bottom: 30px;
+}
+
+/* Estilos para los badges de estado */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-badge.activo {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+}
+
+.status-badge.atrasado {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-badge.entregado {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* Resumen estadístico */
+.reporte-summary {
+  background-color: #f5f7fb;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.reporte-summary h4 {
+  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.reporte-summary p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Botones de acción para reportes */
+.reporte-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.download-pdf {
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+}
+
+.download-pdf:hover {
+  background-color: #004494;
+}
+
+.send-email {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+}
+
+.send-email:hover {
+  background-color: #3d8b40;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .reportes-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group {
+    width: 100%;
+  }
+  
+  .reporte-actions {
+    flex-direction: column;
+  }
+  
+  .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
