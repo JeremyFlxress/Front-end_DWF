@@ -111,11 +111,19 @@
   border-radius: 4px;
   font-size: 14px;
   width: 70%;
+  background-color: #e9ecef;
+  color: #6c757d;
 }
 
 .form-control:focus {
   outline: none;
   border-color: #4c7cff;
+}
+
+.form-control-cant:focus {
+  outline: none;
+  border-color: #4c7cff;
+  background-color: #e9ecef;
 }
 
 .form-row {
