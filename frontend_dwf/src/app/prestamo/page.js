@@ -1,16 +1,31 @@
 'use client';
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 
+const Select = dynamic(() => import('react-select'), {
+  ssr: false,
+});
+
+const studentOptions = [
+  { value: 'FP24001', label: 'FP24001', nombre: 'Juan Pérez', email: 'juan@ejemplo.com' },
+  { value: 'EST002', label: 'EST002', nombre: 'María García', email: 'maria@ejemplo.com' },
+  { value: 'EST003', label: 'EST003', nombre: 'Carlos López', email: 'carlos@ejemplo.com' },
+];
+
+const bookOptions = [
+  { value: '1', label: 'Don Quijote de la Mancha' },
+  { value: '2', label: 'Cien años de soledad' },
+  { value: '3', label: 'El principito' },
+];
 
 export default function PrestamoForm() {
   const [formData, setFormData] = useState({
     carnet: '',
     nombre: '',
-    codigo: '',
-    titulo: '',
     email: '',
+    titulo: '',
     fechaPrestamo: '',
     fechaDevolucion: ''
   });
@@ -23,15 +38,36 @@ export default function PrestamoForm() {
     });
   };
 
+  const handleStudentSelect = (selectedOption) => {
+    setFormData({
+      ...formData,
+      carnet: selectedOption?.value || '',
+      nombre: selectedOption?.nombre || '',
+      email: selectedOption?.email || ''
+    });
+  };
+
+  const handleBookSelect = (selectedOption) => {
+    setFormData({
+      ...formData,
+      titulo: selectedOption?.label || ''
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Aquí iría la lógica para enviar los datos del formulario
     console.log('Datos del formulario:', formData);
   };
 
-  const handleSearch = () => {
-    // Aquí iría la lógica para buscar el libro por código
-    console.log('Buscando libro con código:', formData.codigo);
+  const filterStudents = (inputValue) => {
+    return studentOptions.filter(student =>
+      student.label.toLowerCase().includes(inputValue.toLowerCase())
+    );
+  };
+
+  const filterOption = (option, inputValue) => {
+    if (!inputValue) return false; // No mostrar opciones si no hay input
+    return option.label.toLowerCase().includes(inputValue.toLowerCase());
   };
 
   return (
@@ -51,13 +87,17 @@ export default function PrestamoForm() {
               <form onSubmit={handleSubmit}>
                 <div className="form-group">
                   <label htmlFor="carnet">Carnet de estudiante</label>
-                  <input
-                    type="text"
+                  <Select
                     id="carnet"
-                    name="carnet"
-                    value={formData.carnet}
-                    onChange={handleChange}
-                    className="form-control"
+                    options={studentOptions}
+                    onChange={handleStudentSelect}
+                    placeholder="Buscar por carnet..."
+                    noOptionsMessage={({inputValue}) => 
+                      !inputValue ? "Escribe para buscar..." : "No hay coincidencias"
+                    }
+                    filterOption={filterOption}
+                    isClearable
+                    isSearchable
                   />
                 </div>
                 
@@ -68,45 +108,11 @@ export default function PrestamoForm() {
                     id="nombre"
                     name="nombre"
                     value={formData.nombre}
-                    onChange={handleChange}
-                    className="form-control"
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="codigo">Codigo de libro</label>
-                  <div className="search-container">
-                    <input
-                      type="text"
-                      id="codigo"
-                      name="codigo"
-                      value={formData.codigo}
-                      onChange={handleChange}
-                      className="form-control"
-                    />
-                    <button 
-                      type="button" 
-                      className="search-button"
-                      onClick={handleSearch}
-                    >
-                      Buscar
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="titulo">Titulo de libro</label>
-                  <input
-                    type="text"
-                    id="titulo"
-                    name="titulo"
-                    value={formData.titulo}
-                    onChange={handleChange}
-                    className="form-control"
                     readOnly
+                    className="form-control"
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label htmlFor="email">Email</label>
                   <input
@@ -114,8 +120,24 @@ export default function PrestamoForm() {
                     id="email"
                     name="email"
                     value={formData.email}
-                    onChange={handleChange}
+                    readOnly
                     className="form-control"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="titulo">Título de libro</label>
+                  <Select
+                    id="titulo"
+                    options={bookOptions}
+                    onChange={handleBookSelect}
+                    placeholder="Buscar libro..."
+                    noOptionsMessage={({inputValue}) => 
+                      !inputValue ? "Escribe para buscar..." : "No hay coincidencias"
+                    }
+                    filterOption={filterOption}
+                    isClearable
+                    isSearchable
                   />
                 </div>
                 

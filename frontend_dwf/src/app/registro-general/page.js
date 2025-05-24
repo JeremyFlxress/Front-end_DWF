@@ -63,7 +63,6 @@ export default function RegistroGeneral() {
           <h2 className="section-title">Registro general</h2>
           
           <div className="panel-container">
-            {/* Barra de búsqueda y exportar */}
             <div className="filtros-container">
               <div className="search-container">
                 <input
@@ -82,9 +81,8 @@ export default function RegistroGeneral() {
                 Exportar
                 <span className="exportar-icon">⤓</span>
               </button>
-            </div>
+            </div>     
             
-            {/* Tabla de registros */}
             <table className="tabla-registro">
               <thead>
                 <tr>
@@ -104,15 +102,14 @@ export default function RegistroGeneral() {
                     <td>{registro.libro}</td>
                     <td>{registro.estudiante}</td>
                     <td>{registro.fechaPrestamo}</td>
-                    <td>{registro.fechaDevolucion}</td>                    <td>
-                      {registro.estado}
-                    </td>
+                    <td>{registro.fechaDevolucion}</td>
+                    <td>{registro.estado}</td>
                     <td>{registro.semana}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-
+            
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}

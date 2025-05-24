@@ -24,7 +24,7 @@ export default function Page() {
   };
 
   const handleEditar = () => {
-    router.push('/editar-libro');
+    router.push('/RenovarPrestamo');
   };
 
   const handleEliminar = () => {
@@ -90,12 +90,12 @@ export default function Page() {
               
               <div className="detail-row dates-row">
                 <div className="date-detail">
-                  <span className="detail-label">fecha Prestamo:</span>
+                  <span className="detail-label">Fecha Prestamo:</span>
                   <span className="detail-value">{prestamoData.fechaPrestamo}</span>
                 </div>
                 
                 <div className="date-detail">
-                  <span className="detail-label">fecha Devolución:</span>
+                  <span className="detail-label">Fecha Devolución:</span>
                   <span className="detail-value">{prestamoData.fechaDevolucion}</span>
                 </div>
               </div>
@@ -122,7 +122,7 @@ export default function Page() {
                   className="editar-button"
                   onClick={handleEditar}
                 >
-                  Editar
+                  Renovar
                 </button>
                 {puedeEliminar ? (
                   <button 

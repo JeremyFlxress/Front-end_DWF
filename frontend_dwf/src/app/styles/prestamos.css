@@ -2,7 +2,6 @@ body, html {
   margin: 0;
   padding: 0;
   height: 100%;
- 
 }
 
 .prestamo-container {
@@ -57,6 +56,7 @@ body, html {
 /* Grupo de campos del formulario */
 .form-group {
   margin-bottom: 12px;
+  width: 83%;
 }
 
 /* Etiquetas de los campos */
@@ -70,7 +70,7 @@ body, html {
 
 /* Campos de entrada */
 .form-control {
-  width: 70%;
+  width: 350%;
   padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 3px;
@@ -79,7 +79,7 @@ body, html {
 }
 
 .form-control-cant {
-  width: 85%;
+  width: 350%;
   padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 3px;
@@ -108,9 +108,9 @@ body, html {
   font-size: 0.9rem;
 }
 
-/* Campos de fecha */
+/* Campos de fecha - MÁS CORTOS */
 .date-group input {
-  width: 100%;
+  width: 60%;
   padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 3px;
@@ -126,8 +126,22 @@ body, html {
   align-items: flex-start;
 }
 
+/* Campo de título de libro - MISMO ANCHO QUE NOMBRE ESTUDIANTE */
 .libro-search .form-control {
+  width: 70%;
+  flex: none;
+}
+
+/* Botón de búsqueda */
+.search-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-container .form-control {
   flex: 1;
+  width: auto;
 }
 
 /* Botón de búsqueda */
@@ -141,6 +155,7 @@ body, html {
   font-weight: normal;
   font-size: 0.9rem;
   height: 32px;
+  white-space: nowrap;
 }
 
 .search-button:hover {
@@ -193,6 +208,10 @@ body, html {
     gap: 12px;
   }
   
+  .date-group input {
+    width: 100%;
+  }
+  
   .form-buttons {
     flex-direction: column;
   }
@@ -200,4 +219,15 @@ body, html {
   .submit-button, .cancel-button {
     width: 100%;
   }
+}
+.form-group .search-container .form-control {
+  width: 350% !important;
+  flex: none !important;
+}
+
+
+
+/* Para los campos de fecha - más específico */
+.form-dates .date-group input {
+  width: 60% !important;
 }
