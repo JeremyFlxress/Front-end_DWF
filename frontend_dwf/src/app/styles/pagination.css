@@ -1,0 +1,152 @@
+/* Asegúrate de que el contenedor padre tenga position: relative y min-height */
+.container-parent {
+  position: relative;
+  min-height: calc(100vh - 100px); /* Ajusta según tu layout */
+  display: flex;
+  flex-direction: column;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-top: 1px solid #eee;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  max-width: 1200px; /* Opcional: para limitar el ancho */
+  margin: 0 auto; /* Centrar el contenido */
+}
+
+/* El resto de tus estilos se mantienen igual */
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.pagination-info span {
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  color: #333;
+}
+
+.page-size-select {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background-color: white;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 32px;
+}
+
+.page-size-select:hover {
+  border-color: #4285f4;
+  box-shadow: 0 2px 4px rgba(66, 133, 244, 0.1);
+}
+
+.page-size-select:focus {
+  outline: none;
+  border-color: #4285f4;
+  box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.pagination-button {
+  padding: 8px 14px;
+  border: 1px solid #e0e0e0;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  min-width: 40px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin: 0 2px;
+  font-weight: 500;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #f8f9fa;
+  border-color: #4285f4;
+  color: #4285f4;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(66, 133, 244, 0.1);
+}
+
+.pagination-button.active {
+  background-color: #4285f4;
+  color: white;
+  border-color: #4285f4;
+  box-shadow: 0 2px 4px rgba(66, 133, 244, 0.2);
+}
+
+.pagination-button:disabled {
+  background-color: #f5f5f5;
+  color: #bbb;
+  cursor: not-allowed;
+  border-color: #e0e0e0;
+}
+
+.pagination-button.dots {
+  border: none;
+  background: none;
+  cursor: default;
+  box-shadow: none;
+  padding: 8px 8px;
+}
+
+/* Estilos específicos para los botones de navegación */
+.pagination-button:first-child,
+.pagination-button:last-child {
+  padding: 8px 16px;
+  font-weight: 500;
+  min-width: 100px;
+}
+
+/* Nuevos estilos para el wrapper */
+.pagination-wrapper {
+  margin-top: auto; /* Empuja el paginador hacia abajo */
+  position: sticky;
+  bottom: 0;
+  background: white;
+  width: 100%;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-top: 1px solid #eee;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  max-width: 1200px; /* Opcional: para limitar el ancho */
+  margin: 0 auto; /* Centrar el contenido */
+}
+
+/* El resto de tus estilos permanecen igual */
+/* ... */

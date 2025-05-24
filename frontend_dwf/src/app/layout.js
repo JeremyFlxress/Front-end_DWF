@@ -7,6 +7,7 @@ import './styles/registroGeneral.css';
 import './styles/reportes.css';
 import './styles/renovar.css';
 import './styles/detalles.css';
+import './styles/pagination.css';
 
 export const metadata = {
   title: 'Sistema ¡SUPÉRATE!',

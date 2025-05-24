@@ -2,52 +2,52 @@
 
 /* Estilos específicos para la página de reportes */
 .reportes-filters {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  padding: 20px;
-  margin-bottom: 20px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
+  gap: 20px;
   align-items: flex-end;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: 24px;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  min-width: 200px;
+  gap: 8px;
 }
 
 .filter-group label {
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: #666;
   font-weight: 500;
 }
 
 .filter-select {
   padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #f9f9f9;
-  font-size: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background-color: white;
   color: #333;
+  font-size: 0.9rem;
+  min-width: 200px;
 }
 
 .filter-button {
-  padding: 9px 15px;
-  background-color: #0056b3;
+  padding: 8px 16px;
+  background-color: #4285f4;
   color: white;
   border: none;
-  border-radius: 4px;
-  font-weight: 500;
+  border-radius: 6px;
   cursor: pointer;
+  font-weight: 500;
   transition: background-color 0.2s;
+  height: 38px;
 }
 
 .filter-button:hover {
-  background-color: #004494;
+  background-color: #3367d6;
 }
 
 /* Estilos para las tarjetas de estadísticas */
@@ -57,27 +57,56 @@
 
 /* Estilos para la tabla de reportes */
 .activity-section {
-  margin-bottom: 30px;
+  margin-top: 24px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-table-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 400px;
+}
+
+.activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: auto;
+}
+
+.activity-table th {
+  background-color: #f4f4f4;
+  padding: 12px;
+  text-align: left;
+  font-weight: 500;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.activity-table td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  color: #555;
 }
 
 /* Estilos para los badges de estado */
 .status-badge {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
   font-weight: 500;
   text-transform: uppercase;
 }
 
 .status-badge.activo {
   background-color: #e3f2fd;
-  color: #0d47a1;
-}
-
-.status-badge.atrasado {
-  background-color: #ffebee;
-  color: #c62828;
+  color: #1976d2;
 }
 
 .status-badge.entregado {
@@ -85,60 +114,70 @@
   color: #2e7d32;
 }
 
+.status-badge.atrasado {
+  background-color: #fbe9e7;
+  color: #d32f2f;
+}
+
 /* Resumen estadístico */
 .reporte-summary {
-  background-color: #f5f7fb;
-  padding: 15px 20px;
-  border-radius: 8px;
-  margin: 20px 0;
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
 }
 
 .reporte-summary h4 {
-  font-size: 16px;
-  margin-top: 0;
-  margin-bottom: 10px;
+  margin: 0 0 12px 0;
   color: #333;
 }
 
 .reporte-summary p {
-  margin: 5px 0;
-  font-size: 14px;
+  margin: 8px 0;
   color: #555;
 }
 
 /* Botones de acción para reportes */
 .reporte-actions {
+  margin-top: 24px;
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 12px;
 }
 
 .action-button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.download-pdf {
-  background-color: #0056b3;
-  color: white;
+  padding: 8px 16px;
   border: none;
-  padding: 8px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
-.download-pdf:hover {
-  background-color: #004494;
-}
-
-.send-email {
+.action-button.download-pdf {
   background-color: #4caf50;
   color: white;
-  border: none;
-  padding: 8px 15px;
 }
 
-.send-email:hover {
-  background-color: #3d8b40;
+.action-button.send-email {
+  background-color: #2196f3;
+  color: white;
+}
+
+.action-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* Mensaje cuando no hay datos */
+.no-data-message {
+  text-align: center;
+  padding: 24px;
+  color: #666;
+  font-size: 0.95rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  margin: 16px 0;
 }
 
 /* Responsive */

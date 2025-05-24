@@ -3,18 +3,26 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import Pagination from '../components/Pagination';
 import '../styles/catalogo.css';
+import '../styles/pagination.css';
 
 export default function Catalogo() {
   const router = useRouter();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [searchTerm, setSearchTerm] = useState('');
   
   // Datos de ejemplo
   const [librosData, setLibrosData] = useState([
     { codigo: 'AEP4001', titulo: 'Alicia en el país de las maravillas', autor: 'Autor 1', cantidad: 15, categoria: 'Ciencia Ficcion', disponibilidad: 'Disponible' },
     { codigo: 'P24002', titulo: 'Libro 2', autor: 'Autor 2', cantidad: 15, categoria: 'Infantil', disponibilidad: 'No Disponible' },
     { codigo: 'P24003', titulo: 'Libro 3', autor: 'Autor 3', cantidad: 24, categoria: 'Novela', disponibilidad: 'Disponible' },
+    { codigo: 'P24004', titulo: 'Libro 4', autor: 'Autor 4', cantidad: 12, categoria: 'Ciencia', disponibilidad: 'Disponible' },
+    { codigo: 'P24005', titulo: 'Libro 5', autor: 'Autor 5', cantidad: 8, categoria: 'Historia', disponibilidad: 'No Disponible' },
+    { codigo: 'P24006', titulo: 'Libro 6', autor: 'Autor 6', cantidad: 18, categoria: 'Ficción', disponibilidad: 'Disponible' },
   ]);
 
   const handleNuevoLibro = () => {
@@ -45,6 +53,23 @@ export default function Catalogo() {
     setSelectedBook(null);
   };
 
+  // Filtrar libros según el término de búsqueda
+  const filteredBooks = librosData.filter(libro => 
+    libro.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    libro.autor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    libro.codigo.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Calcular índices para paginación
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  
+  // Obtener los libros de la página actual
+  const currentBooks = filteredBooks.slice(startIndex, endIndex);
+  
+  // Calcular el número total de páginas
+  const totalPages = Math.ceil(filteredBooks.length / pageSize);
+
   return (
     <div className="prestamo-container">
       <Sidebar />
@@ -61,7 +86,13 @@ export default function Catalogo() {
                 type="text" 
                 placeholder="Buscar libro"
                 className="search-input"
-              />              <button 
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1); // Resetear a primera página al buscar
+                }}
+              />
+              <button 
                 className="btn-nuevo-libro"
                 onClick={handleNuevoLibro}
               >
@@ -82,7 +113,7 @@ export default function Catalogo() {
                 </tr>
               </thead>
               <tbody>
-                {librosData.map((libro) => (
+                {currentBooks.map((libro) => (
                   <tr key={libro.codigo}>
                     <td>{libro.codigo}</td>
                     <td>{libro.titulo}</td>
@@ -114,6 +145,15 @@ export default function Catalogo() {
                 ))}
               </tbody>
             </table>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+              totalItems={filteredBooks.length}
+            />
           </div>
         </div>
 

@@ -23,6 +23,8 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 15px;
   max-width: 100%;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
 }
 
 /* Filtros superiores */
@@ -114,20 +116,7 @@
   color: #555;
 }
 
-/* Estado entregado */
-.estado-entregado {
-  color: #2ecc71;
-}
 
-/* Estado pendiente */
-.estado-pendiente {
-  color: #7f8c8d;
-}
-
-/* Estado atrasado */
-.estado-atrasado {
-  color: #e74c3c;
-}
 
 /* Botón Ver */
 .btn-ver {

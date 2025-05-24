@@ -2,38 +2,34 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import Pagination from '../components/Pagination';
+import '../styles/pagination.css';
 
 export default function RegistroGeneral() {
   const [busqueda, setBusqueda] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
   
   // Datos de ejemplo - estos podrían venir de una API o props
   const registrosData = [
     { id: 'P24001', libro: 'Libro 1', estudiante: 'Estudiante 1', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 1' },
-    { id: 'P24001', libro: 'Libro 2', estudiante: 'Estudiante 2', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Pendiente', semana: 'Semana 2' },
-    { id: 'P24001', libro: 'Libro 3', estudiante: 'Estudiante 3', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Atrasado', semana: 'Semana 3' },
-    { id: 'P24001', libro: 'Libro 4', estudiante: 'Estudiante 4', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 1' },
-    { id: 'P24001', libro: 'Libro 5', estudiante: 'Estudiante 5', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 2' },
-    { id: 'P24001', libro: 'Libro 6', estudiante: 'Estudiante 6', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 3' },
-    { id: 'P24001', libro: 'Libro 7', estudiante: 'Estudiante 7', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Pendiente', semana: 'Semana 1' },
+    { id: 'P24002', libro: 'Libro 2', estudiante: 'Estudiante 2', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Pendiente', semana: 'Semana 2' },
+    { id: 'P24003', libro: 'Libro 3', estudiante: 'Estudiante 3', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Atrasado', semana: 'Semana 3' },
+    { id: 'P24004', libro: 'Libro 4', estudiante: 'Estudiante 4', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 1' },
+    { id: 'P24005', libro: 'Libro 5', estudiante: 'Estudiante 5', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 2' },
+    { id: 'P24006', libro: 'Libro 6', estudiante: 'Estudiante 6', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 3' },
+    { id: 'P24007', libro: 'Libro 7', estudiante: 'Estudiante 7', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Pendiente', semana: 'Semana 1' },
   ];
 
   const handleExportar = () => {
     console.log('Exportando datos...');
   };
 
-  // Función para determinar la clase de estado
-  const getEstadoClass = (estado) => {
-    switch(estado) {
-      case 'Entregado': return 'estado-entregado';
-      case 'Pendiente': return 'estado-pendiente';
-      case 'Atrasado': return 'estado-atrasado';
-      default: return '';
-    }
-  };
-
   const handleSearch = (e) => {
     setBusqueda(e.target.value);
+    setCurrentPage(1); // Resetear a primera página al buscar
   };
+
 
   // Filtrar registros según búsqueda
   const registrosFiltrados = busqueda 
@@ -43,6 +39,16 @@ export default function RegistroGeneral() {
         registro.id.toLowerCase().includes(busqueda.toLowerCase())
       )
     : registrosData;
+
+  // Calcular índices para paginación
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  
+  // Obtener los registros de la página actual
+  const currentRegistros = registrosFiltrados.slice(startIndex, endIndex);
+  
+  // Calcular el número total de páginas
+  const totalPages = Math.ceil(registrosFiltrados.length / pageSize);
 
   return (
     <div className="app-container">
@@ -92,14 +98,13 @@ export default function RegistroGeneral() {
                 </tr>
               </thead>
               <tbody>
-                {registrosFiltrados.map((registro, index) => (
+                {currentRegistros.map((registro, index) => (
                   <tr key={index}>
                     <td>{registro.id}</td>
                     <td>{registro.libro}</td>
                     <td>{registro.estudiante}</td>
                     <td>{registro.fechaPrestamo}</td>
-                    <td>{registro.fechaDevolucion}</td>
-                    <td className={getEstadoClass(registro.estado)}>
+                    <td>{registro.fechaDevolucion}</td>                    <td>
                       {registro.estado}
                     </td>
                     <td>{registro.semana}</td>
@@ -107,6 +112,15 @@ export default function RegistroGeneral() {
                 ))}
               </tbody>
             </table>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+              totalItems={registrosFiltrados.length}
+            />
           </div>
         </div>
       </div>

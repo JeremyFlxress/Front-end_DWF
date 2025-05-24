@@ -1,8 +1,10 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import '../styles/reportes.css'; 
+import Pagination from '../components/Pagination';
+import '../styles/reportes.css';
+import '../styles/pagination.css';
 
 const reportesData = {
   prestamosNuevos: 42,
@@ -10,6 +12,7 @@ const reportesData = {
   devolucionesAtrasadas: 8
 };
 
+// Datos de ejemplo - estos vendrían de tu API
 const loanData = [
   { id: 'P24001', libro: 'Cien años de soledad', estudiante: 'María López', fechaPrestamo: '12/05/2024', fechaDevolucion: '26/05/2024', estado: 'Activo' },
   { id: 'P24002', libro: 'El principito', estudiante: 'Juan Pérez', fechaPrestamo: '10/05/2024', fechaDevolucion: '24/05/2024', estado: 'Activo' },
@@ -19,6 +22,57 @@ const loanData = [
 ];
 
 export default function Reportes() {
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  
+  // Estados para filtros
+  const [tipoReporte, setTipoReporte] = useState('prestamos');
+  const [periodo, setPeriodo] = useState('mes');
+  const [mostrarDatos, setMostrarDatos] = useState(false);
+  const [datosFiltrados, setDatosFiltrados] = useState([]);
+
+  // Función para aplicar filtros
+  const aplicarFiltros = () => {
+    // Aquí irá la lógica para filtrar datos según el tipo de reporte y período
+    // Cuando conectes con la API, aquí harías la llamada con los filtros correspondientes
+    
+    // Por ahora, simulamos el filtrado
+    let datos = [...loanData];
+    
+    // Filtrar por tipo de reporte
+    switch (tipoReporte) {
+      case 'prestamos':
+        datos = datos.filter(item => item.estado === 'Activo');
+        break;
+      case 'devoluciones':
+        datos = datos.filter(item => item.estado === 'Entregado');
+        break;
+      case 'libros':
+        // Aquí iría la lógica para mostrar los libros más prestados
+        break;
+      case 'estudiantes':
+        // Aquí iría la lógica para mostrar estudiantes activos
+        break;
+    }
+
+    // Aquí simularemos el filtrado por período
+    // En la implementación real, esto se haría en el backend
+    setDatosFiltrados(datos);
+    setMostrarDatos(true);
+    setCurrentPage(1); // Resetear a la primera página al aplicar filtros
+  };
+
+  // Calcular índices para paginación
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  
+  // Obtener los datos de la página actual
+  const currentData = datosFiltrados.slice(startIndex, endIndex);
+  
+  // Calcular el número total de páginas
+  const totalPages = Math.ceil(datosFiltrados.length / pageSize);
+
   return (
     <div className="dashboard-container">
       <Sidebar />
@@ -52,7 +106,8 @@ export default function Reportes() {
               <select 
                 id="reporte-type" 
                 className="filter-select"
-                defaultValue="prestamos"
+                value={tipoReporte}
+                onChange={(e) => setTipoReporte(e.target.value)}
               >
                 <option value="prestamos">Préstamos</option>
                 <option value="devoluciones">Devoluciones</option>
@@ -66,7 +121,8 @@ export default function Reportes() {
               <select 
                 id="date-range" 
                 className="filter-select"
-                defaultValue="mes"
+                value={periodo}
+                onChange={(e) => setPeriodo(e.target.value)}
               >
                 <option value="semana">Última semana</option>
                 <option value="mes">Último mes</option>
@@ -75,58 +131,82 @@ export default function Reportes() {
               </select>
             </div>
             
-            <button className="filter-button">Aplicar filtros</button>
+            <button 
+              className="filter-button"
+              onClick={aplicarFiltros}
+            >
+              Aplicar filtros
+            </button>
           </div>
           
-          <div className="activity-section">
-            <h3 className="section-title">Detalle de préstamos</h3>
-            
-            <div className="activity-table-container">
-              <table className="activity-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Libro</th>
-                    <th>Estudiante</th>
-                    <th>Fecha préstamo</th>
-                    <th>Fecha devolución</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loanData.map((loan, index) => (
-                    <tr key={index}>
-                      <td>{loan.id}</td>
-                      <td>{loan.libro}</td>
-                      <td>{loan.estudiante}</td>
-                      <td>{loan.fechaPrestamo}</td>
-                      <td>{loan.fechaDevolucion}</td>
-                      <td>
-                        <span className={`status-badge ${loan.estado.toLowerCase()}`}>
-                          {loan.estado}
-                        </span>
-                      </td>
+          {mostrarDatos && (
+            <div className="activity-section">
+              <h3 className="section-title">Detalle de préstamos</h3>
+              
+              <div className="activity-table-container">
+                <table className="activity-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Libro</th>
+                      <th>Estudiante</th>
+                      <th>Fecha préstamo</th>
+                      <th>Fecha devolución</th>
+                      <th>Estado</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {currentData.map((loan, index) => (
+                      <tr key={index}>
+                        <td>{loan.id}</td>
+                        <td>{loan.libro}</td>
+                        <td>{loan.estudiante}</td>
+                        <td>{loan.fechaPrestamo}</td>
+                        <td>{loan.fechaDevolucion}</td>
+                        <td>
+                          <span className={`status-badge ${loan.estado.toLowerCase()}`}>
+                            {loan.estado}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {datosFiltrados.length > 0 ? (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    pageSize={pageSize}
+                    onPageSizeChange={setPageSize}
+                    totalItems={datosFiltrados.length}
+                  />
+                ) : (
+                  <div className="no-data-message">
+                    No se encontraron datos para los filtros seleccionados
+                  </div>
+                )}
+              </div>
+              
+              <div className="reporte-summary">
+                <h4>Resumen</h4>
+                <p><strong>Total registros:</strong> {datosFiltrados.length}</p>
+                {tipoReporte === 'prestamos' && (
+                  <p><strong>Tasa de devolución a tiempo:</strong> {Math.round((reportesData.devolucionesATiempo / (reportesData.devolucionesATiempo + reportesData.devolucionesAtrasadas)) * 100)}%</p>
+                )}
+              </div>
+              
+              <div className="reporte-actions">
+                <button className="action-button download-pdf">
+                  Descargar PDF
+                </button>
+                <button className="action-button send-email">
+                  Enviar por correo
+                </button>
+              </div>
             </div>
-            
-            <div className="reporte-summary">
-              <h4>Resumen</h4>
-              <p><strong>Total préstamos:</strong> {reportesData.prestamosNuevos + reportesData.devolucionesATiempo + reportesData.devolucionesAtrasadas}</p>
-              <p><strong>Tasa de devolución a tiempo:</strong> {Math.round((reportesData.devolucionesATiempo / (reportesData.devolucionesATiempo + reportesData.devolucionesAtrasadas)) * 100)}%</p>
-            </div>
-            
-            <div className="reporte-actions">
-              <button className="action-button download-pdf">
-                Descargar PDF
-              </button>
-              <button className="action-button send-email">
-                Enviar por correo
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

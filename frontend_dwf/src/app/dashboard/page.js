@@ -1,9 +1,11 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import DashboardCard from '../components/DashboardCard';
 import ActivityTable from '../components/ActivityTable';
+import Pagination from '../components/Pagination';
+import '../styles/pagination.css';
 
 // Datos de muestra - Estos vendrían de tu backend en el futuro
 const dashboardData = {
@@ -23,6 +25,19 @@ const recentActivities = [
 ];
 
 export default function Dashboard() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+
+  // Calcular índices para paginación
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  
+  // Obtener las actividades de la página actual
+  const currentActivities = recentActivities.slice(startIndex, endIndex);
+  
+  // Calcular el número total de páginas
+  const totalPages = Math.ceil(recentActivities.length / pageSize);
+
   return (
     <div className="dashboard-container">
       <Sidebar />
@@ -41,7 +56,15 @@ export default function Dashboard() {
           
           <div className="activity-section">
             <h2 className="section-title">Actividad reciente</h2>
-            <ActivityTable activities={recentActivities} />
+            <ActivityTable activities={currentActivities} />
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+              totalItems={recentActivities.length}
+            />
           </div>
         </div>
       </div>

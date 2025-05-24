@@ -1,14 +1,14 @@
 'use client';
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import '../styles/detalles.css';
 
 export default function Page() {
   const router = useRouter();
-  
-  const prestamoData = {
+  const searchParams = useSearchParams();
+  const [prestamoData, setPrestamoData] = useState({
     carnet: 'GM240279',
     nombre: 'Juan Ricardo Gamez Malandro',
     codigo: 'NS2925',
@@ -16,11 +16,20 @@ export default function Page() {
     email: 'juanricar90@gmail.com',
     fechaPrestamo: '10/05/2025',
     fechaDevolucion: '25/05/2025',
-    estado: 'Entregado'
-  };
+    estado: searchParams.get('estado') || 'Pendiente'
+  });
 
   const handleRenovar = () => {
     router.push('/RenovarPrestamo');
+  };
+
+  const handleEditar = () => {
+    router.push('/editar-libro');
+  };
+
+  const handleEliminar = () => {
+    // Aquí iría la lógica para eliminar el préstamo
+    router.push('/librosactivos');
   };
 
   const handleAplicar = () => {
@@ -29,6 +38,17 @@ export default function Page() {
 
   const handleCancelar = () => {
     router.push('/librosactivos');
+  };
+
+  const puedeEliminar = prestamoData.estado !== 'Entregado';
+
+  const getEstadoClass = (estado) => {
+    switch(estado) {
+      case 'Entregado': return 'estado-entregado';
+      case 'Pendiente': return 'estado-pendiente';
+      case 'Atrasado': return 'estado-atrasado';
+      default: return '';
+    }
   };
 
   return (
@@ -83,37 +103,60 @@ export default function Page() {
               <div className="detail-row status-row">
                 <span className="detail-label">Estado:</span>
                 <div className="status-badge-container">
-                  <span className={`status-badge ${prestamoData.estado.toLowerCase()}`}>
+                  <span className={`status-badge ${getEstadoClass(prestamoData.estado)}`}>
                     {prestamoData.estado}
                   </span>
                 </div>
               </div>
               
               <div className="action-buttons">
+                {prestamoData.estado !== 'Entregado' && (
+                  <button 
+                    className="renovar-button"
+                    onClick={handleRenovar}
+                  >
+                    Renovar
+                  </button>
+                )}
                 <button 
-                  className="renovar-button"
-                  onClick={handleRenovar}
+                  className="editar-button"
+                  onClick={handleEditar}
                 >
-                  Renovar
+                  Editar
                 </button>
-                <button className="eliminar-button">Eliminar</button>
+                {puedeEliminar ? (
+                  <button 
+                    className="eliminar-button"
+                    onClick={handleEliminar}
+                  >
+                    Eliminar
+                  </button>
+                ) : (
+                  <button 
+                    className="eliminar-button-disabled"
+                    title="No se puede eliminar un préstamo ya entregado"
+                    disabled
+                  >
+                    Eliminar
+                  </button>
+                )}
+              </div>
+              
+              <div className="bottom-buttons">
+                <button 
+                  className="aplicar-button"
+                  onClick={handleAplicar} 
+                >
+                  Aplicar
+                </button>
+                <button 
+                  className="cancelar-button"
+                  onClick={handleCancelar} 
+                >
+                  Cancelar
+                </button>
               </div>
             </div>
-          </div>
-          
-          <div className="bottom-buttons">
-            <button 
-              className="aplicar-button"
-              onClick={handleAplicar} 
-            >
-              Aplicar
-            </button>
-            <button 
-              className="cancelar-button"
-              onClick={handleCancelar} 
-            >
-              Cancelar
-            </button>
           </div>
         </div>
       </div>

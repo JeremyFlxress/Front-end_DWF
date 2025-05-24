@@ -1,8 +1,14 @@
 .catalogo-container {
-  padding: 15px 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.catalogo-content {
   flex: 1;
+  padding: 20px 30px;
   overflow-y: auto;
-  height: calc(100vh - 60px);
 }
 
 .search-container {
@@ -130,6 +136,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 15px;
   max-width: 100%;
+ 
 }
 
 /* Botón de cambio de estado */

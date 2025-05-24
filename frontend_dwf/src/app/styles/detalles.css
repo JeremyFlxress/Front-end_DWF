@@ -107,28 +107,28 @@ body, html {
   justify-content: flex-end;
 }
 
-/* Badge de estado */
+/* Estilos para los estados */
 .status-badge {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 14px;
   font-weight: 500;
+}
+
+.estado-entregado {
+  background-color: #4CAF50;
   color: white;
-  text-align: center;
 }
 
-/* Colores de estados */
-.entregado {
-  background-color: #28a745;
+.estado-pendiente {
+  background-color: #FFC107;
+  color: #000;
 }
 
-.pendiente {
-  background-color: #ffc107;
-}
-
-.atrasado {
-  background-color: #dc3545;
+.estado-atrasado {
+  background-color: #F44336;
+  color: white;
 }
 
 /* Botones de acción */
@@ -158,6 +158,18 @@ body, html {
   background-color: #dc3545;
 }
 
+/* Estilos para el botón de eliminar deshabilitado */
+.eliminar-button-disabled {
+  background-color: #ccc;
+  color: #666;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 /* Botones inferiores */
 .bottom-buttons {
   display: flex;
@@ -185,4 +197,20 @@ body, html {
 
 .cancelar-button {
   background-color: #dc3545;
+}
+
+/* Botón de editar */
+.editar-button {
+  background-color: #4A90E2;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.editar-button:hover {
+  background-color: #357ABD;
 }
