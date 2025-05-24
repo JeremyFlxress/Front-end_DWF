@@ -7,15 +7,14 @@ import '../styles/detalles.css';
 
 export default function Page() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [prestamoData, setPrestamoData] = useState({
+  const searchParams = useSearchParams();  const [prestamoData, setPrestamoData] = useState({
     carnet: 'GM240279',
     nombre: 'Juan Ricardo Gamez Malandro',
     codigo: 'NS2925',
     titulo: '1001 noches',
     email: 'juanricar90@gmail.com',
-    fechaPrestamo: '10/05/2025',
-    fechaDevolucion: '25/05/2025',
+    fechaPrestamo: '2025-05-10',
+    fechaDevolucion: '2025-05-25',
     estado: searchParams.get('estado') || 'Pendiente'
   });
 
@@ -107,39 +106,21 @@ export default function Page() {
                     {prestamoData.estado}
                   </span>
                 </div>
-              </div>
-              
-              <div className="action-buttons">
-                {prestamoData.estado !== 'Entregado' && (
+              </div>                <div className="action-buttons">
                   <button 
                     className="renovar-button"
                     onClick={handleRenovar}
                   >
                     Renovar
                   </button>
-                )}
-                <button 
-                  className="editar-button"
-                  onClick={handleEditar}
-                >
-                  Renovar
-                </button>
-                {puedeEliminar ? (
                   <button 
-                    className="eliminar-button"
+                    className={`eliminar-button${prestamoData.estado === 'Entregado' ? '-disabled' : ''}`}
                     onClick={handleEliminar}
+                    disabled={prestamoData.estado === 'Entregado'}
+                    title={prestamoData.estado === 'Entregado' ? "No se puede eliminar un préstamo ya entregado" : ""}
                   >
                     Eliminar
                   </button>
-                ) : (
-                  <button 
-                    className="eliminar-button-disabled"
-                    title="No se puede eliminar un préstamo ya entregado"
-                    disabled
-                  >
-                    Eliminar
-                  </button>
-                )}
               </div>
               
               <div className="bottom-buttons">

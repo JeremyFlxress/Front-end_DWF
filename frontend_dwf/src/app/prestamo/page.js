@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import '../styles/prestamos.css'; // Asegúrate de tener este archivo CSS para los estilos
 
 const Select = dynamic(() => import('react-select'), {
   ssr: false,
@@ -20,14 +21,13 @@ const bookOptions = [
   { value: '3', label: 'El principito' },
 ];
 
-export default function PrestamoForm() {
-  const [formData, setFormData] = useState({
+export default function PrestamoForm() {  const [formData, setFormData] = useState({
     carnet: '',
     nombre: '',
     email: '',
     titulo: '',
-    fechaPrestamo: '',
-    fechaDevolucion: ''
+    fechaPrestamo: new Date().toISOString().split('T')[0],
+    fechaDevolucion: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0]
   });
 
   const handleChange = (e) => {
@@ -145,26 +145,26 @@ export default function PrestamoForm() {
                   <div className="form-group date-group">
                     <label htmlFor="fechaPrestamo">Fecha de Prestamo</label>
                     <input
-                      type="text"
+                      type="date"
                       id="fechaPrestamo"
                       name="fechaPrestamo"
-                      placeholder="dd/mm/aaaa"
                       value={formData.fechaPrestamo}
+                      min={new Date().toISOString().split('T')[0]}
                       onChange={handleChange}
-                      className="form-control"
+                      className="form-control date-input"
                     />
                   </div>
                   
                   <div className="form-group date-group">
                     <label htmlFor="fechaDevolucion">Fecha de Devolucion</label>
                     <input
-                      type="text"
+                      type="date"
                       id="fechaDevolucion"
                       name="fechaDevolucion"
-                      placeholder="dd/mm/aaaa"
                       value={formData.fechaDevolucion}
+                      min={formData.fechaPrestamo}
                       onChange={handleChange}
-                      className="form-control-cant"
+                      className="form-control date-input"
                     />
                   </div>
                 </div>

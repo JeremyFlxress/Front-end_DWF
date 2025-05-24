@@ -146,6 +146,7 @@ export default function Catalogo() {
               </tbody>
             </table>
 
+          </div>
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -154,7 +155,6 @@ export default function Catalogo() {
               onPageSizeChange={setPageSize}
               totalItems={filteredBooks.length}
             />
-          </div>
         </div>
 
         {/* Diálogo de confirmación */}

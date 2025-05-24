@@ -57,6 +57,8 @@ export default function Dashboard() {
           <div className="activity-section">
             <h2 className="section-title">Actividad reciente</h2>
             <ActivityTable activities={currentActivities} />
+          </div>
+        </div>
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -65,8 +67,6 @@ export default function Dashboard() {
               onPageSizeChange={setPageSize}
               totalItems={recentActivities.length}
             />
-          </div>
-        </div>
       </div>
     </div>
   );

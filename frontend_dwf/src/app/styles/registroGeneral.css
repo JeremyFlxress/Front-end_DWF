@@ -24,7 +24,7 @@
 
 /* Contenedor principal de Registro General - Mismo que Libros Activos */
 .registro-general-container {
-  padding: 15px 20px;
+  padding: 15px 0;
   flex: 1;
   overflow-y: auto;
   height: calc(100vh - 60px); /* Igual que en Libros Activos */

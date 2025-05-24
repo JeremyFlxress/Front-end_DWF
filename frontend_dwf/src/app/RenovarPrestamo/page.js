@@ -5,15 +5,14 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 
 export default function Page() {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
+  const router = useRouter();  const [formData, setFormData] = useState({
     carnet: 'GM240279',
     nombre: 'Juan Ricarcdo Gamez Malandro',
     codigo: 'NS2925',
     titulo: '1001 noches',
     email: 'juanricar90@gmail.com',
-    fechaPrestamo: '10/05/2025',
-    fechaDevolucion: '25/05/2025'
+    fechaPrestamo: '2025-05-10',
+    fechaDevolucion: '2025-05-25'
   });
 
   const handleChange = (e) => {
@@ -119,29 +118,29 @@ export default function Page() {
                 </div>
                 
                 <div className="form-dates">
-                  <div className="form-group date-group">
-                    <label htmlFor="fechaPrestamo">Fecha de Prestamo</label>
+                  <div className="form-group date-group">                    <label htmlFor="fechaPrestamo">Fecha de Prestamo</label>
                     <input
-                      type="text"
+                      type="date"
                       id="fechaPrestamo"
                       name="fechaPrestamo"
-                      placeholder="dd/mm/aaaa"
                       value={formData.fechaPrestamo}
+                      min={new Date().toISOString().split('T')[0]}
                       onChange={handleChange}
-                      className="form-control"
+                      className="form-control date-input"
+                      readOnly
                     />
                   </div>
                   
                   <div className="form-group date-group">
                     <label htmlFor="fechaDevolucion">Fecha de Devolucion</label>
                     <input
-                      type="text"
+                      type="date"
                       id="fechaDevolucion"
                       name="fechaDevolucion"
-                      placeholder="dd/mm/aaaa"
                       value={formData.fechaDevolucion}
+                      min={formData.fechaPrestamo}
                       onChange={handleChange}
-                      className="form-control"
+                      className="form-control-edit date-input-edit"
                     />
                   </div>
                 </div>

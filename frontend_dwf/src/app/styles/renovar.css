@@ -77,6 +77,18 @@ body, html {
   border-radius: 3px;
   font-size: 0.9rem;
   height: 32px;
+  cursor: auto;
+}
+
+.form-control-edit {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  background-color: white;
+  border-radius: 3px;
+  font-size: 0.9rem;
+  height: 32px;
+  cursor: pointer;
 }
 
 /* Campos de solo lectura */

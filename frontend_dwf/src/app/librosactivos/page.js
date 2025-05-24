@@ -145,6 +145,8 @@ export default function LibrosActivos() {
               </tbody>
             </table>
 
+          </div>
+        </div>
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -153,8 +155,6 @@ export default function LibrosActivos() {
               onPageSizeChange={setPageSize}
               totalItems={librosFiltrados.length}
             />
-          </div>
-        </div>
       </div>
     </div>
   );

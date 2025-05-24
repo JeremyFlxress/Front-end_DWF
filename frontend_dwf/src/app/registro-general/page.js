@@ -110,6 +110,8 @@ export default function RegistroGeneral() {
               </tbody>
             </table>
             
+          </div>
+        </div>
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -118,8 +120,6 @@ export default function RegistroGeneral() {
               onPageSizeChange={setPageSize}
               totalItems={registrosFiltrados.length}
             />
-          </div>
-        </div>
       </div>
     </div>
   );

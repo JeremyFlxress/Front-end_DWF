@@ -70,21 +70,12 @@ body, html {
 
 /* Campos de entrada */
 .form-control {
-  width: 350%;
+  width: 98%;
   padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 3px;
   font-size: 0.9rem;
-  height: 32px;
-}
-
-.form-control-cant {
-  width: 350%;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 0.9rem;
-  height: 32px;
+  height: 25px;
 }
 
 /* Contenedor para fechas */
@@ -128,7 +119,6 @@ body, html {
 
 /* Campo de título de libro - MISMO ANCHO QUE NOMBRE ESTUDIANTE */
 .libro-search .form-control {
-  width: 70%;
   flex: none;
 }
 
@@ -141,7 +131,6 @@ body, html {
 
 .search-container .form-control {
   flex: 1;
-  width: auto;
 }
 
 /* Botón de búsqueda */
@@ -201,6 +190,35 @@ body, html {
   background-color: #c0392b;
 }
 
+/* Estilos específicos para inputs de fecha */
+.date-input {
+  width: 62.3% !important;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  height: 38px;
+  background-color: #F9F9F9;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding: 4px;
+  filter: invert(0.6);
+}
+
+.date-input:hover {
+  border-color: #4285f4;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #4285f4;
+  box-shadow: 0 0 0 1px rgba(66, 133, 244, 0.1);
+}
+
 /* Estilos para dispositivos móviles */
 @media (max-width: 768px) {
   .form-dates {
@@ -221,7 +239,7 @@ body, html {
   }
 }
 .form-group .search-container .form-control {
-  width: 350% !important;
+  width: 50% !important;
   flex: none !important;
 }
 
@@ -229,5 +247,7 @@ body, html {
 
 /* Para los campos de fecha - más específico */
 .form-dates .date-group input {
-  width: 60% !important;
+  width: 62.3% !important;
+  background-color: #F9F9F9;
+  height: 25px;
 }
