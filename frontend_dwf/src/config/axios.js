@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-// Obtener configuración del entorno o usar valores por defecto
-const API_URL = 'http://localhost:8080';
-const API_TIMEOUT = 30000;
+// Environment configuration
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT, 10) || 30000;
+const isDevelopment = process.env.NODE_ENV === 'development';
 
-// Crear una instancia de axios con la configuración base
+// Create axios instance with base configuration
 const axiosInstance = axios.create({
     baseURL: API_URL,
     headers: {
@@ -12,16 +13,20 @@ const axiosInstance = axios.create({
         'Accept': 'application/json'
     },
     timeout: API_TIMEOUT,
-    withCredentials: false // Cambiado a false para evitar problemas de CORS
+    withCredentials: false,
 });
 
-// Interceptor para manejar peticiones
+// Request interceptor
 axiosInstance.interceptors.request.use(
     (config) => {
-        console.log('Realizando petición a:', config.baseURL + config.url);
-        console.log('Método:', config.method?.toUpperCase());
-        console.log('Headers:', config.headers);
-        console.log('Data:', config.data);
+        if (isDevelopment) {
+            console.log('Request:', {
+                url: config.baseURL + config.url,
+                method: config.method?.toUpperCase(),
+                headers: config.headers,
+                data: config.data
+            });
+        }
         
         const token = localStorage.getItem('token');
         if (token) {
@@ -30,35 +35,43 @@ axiosInstance.interceptors.request.use(
         return config;
     },
     (error) => {
-        console.error('Error en la petición:', error.message);
+        console.error('Request error:', error.message);
         return Promise.reject(error);
     }
 );
 
-// Interceptor para manejar respuestas
+// Response interceptor
 axiosInstance.interceptors.response.use(
     (response) => {
-        console.log('Respuesta exitosa de:', response.config.url);
-        console.log('Status:', response.status);
-        console.log('Data:', response.data);
-        return response;
-    },    (error) => {
-        if (error.response) {
-            console.error('Error en la respuesta:', {
-                url: error.config?.url,
-                method: error.config?.method,
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.response?.data?.message || error.message
+        if (isDevelopment) {
+            console.log('Response:', {
+                url: response.config.url,
+                status: response.status,
+                data: response.data
             });
+        }
+        return response;
+    },
+    (error) => {
+        const errorResponse = {
+            url: error.config?.url,
+            method: error.config?.method,
+            status: error.response?.status,
+            message: error.response?.data?.message || error.message
+        };
 
-            // Manejar diferentes códigos de estado HTTP
+        if (isDevelopment) {
+            console.error('Response error:', errorResponse);
+        }
+
+        if (error.response) {
+            // Server responded with a status code outside of 2xx range
             switch (error.response.status) {
                 case 400:
                     return Promise.reject(new Error(error.response.data?.message || 'Datos inválidos. Por favor verifique la información.'));
                 case 401:
                     localStorage.removeItem('token');
-                    if (window.location.pathname !== '/login') {
+                    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
                         window.location.href = '/login';
                     }
                     return Promise.reject(new Error('Sesión expirada. Por favor inicie sesión nuevamente.'));
@@ -67,33 +80,31 @@ axiosInstance.interceptors.response.use(
                 case 404:
                     return Promise.reject(new Error('El recurso solicitado no existe.'));
                 case 408:
+                case 'ECONNABORTED':
                     return Promise.reject(new Error('La solicitud ha excedido el tiempo de espera. Por favor intente nuevamente.'));
                 case 500:
                     return Promise.reject(new Error('Error interno del servidor. Por favor intente más tarde.'));
                 default:
                     return Promise.reject(new Error('Ha ocurrido un error inesperado. Por favor intente más tarde.'));
-            }        } else if (error.request) {
-            // La solicitud fue hecha pero no se recibió respuesta
+            }
+        } else if (error.request) {
+            // Request was made but no response received
             if (error.code === 'ECONNABORTED') {
-                console.error('Error de timeout:', error.message);
                 return Promise.reject(new Error('La solicitud ha excedido el tiempo de espera. Por favor intente nuevamente.'));
             }
-              if (error.message.includes('Network Error')) {
-                console.error('Error de red:', error.message);
-                const url = error.config?.url || '';
-                return Promise.reject(new Error('No se puede establecer conexión con el servidor. ' +
-                    'Por favor verifique que el servidor esté corriendo en el puerto 8080 y que su conexión a internet esté activa.'));
+            
+            if (error.message.includes('Network Error')) {
+                return Promise.reject(new Error(
+                    'No se puede establecer conexión con el servidor. ' +
+                    'Por favor verifique que el servidor esté corriendo en el puerto correcto y que su conexión a internet esté activa.'
+                ));
             }
 
-            console.error('Error de solicitud:', error.message);
-            return Promise.reject(new Error('Error de conexión. Por favor verifique que el servidor esté corriendo y que su conexión a internet esté activa.'));
-        } else {
-            // Algo sucedió en la configuración de la solicitud que provocó un error
-            console.error('Error de configuración:', error.message);
-            return Promise.reject(new Error('Error en la configuración de la solicitud. Por favor contacte al soporte técnico.'));
+            return Promise.reject(new Error('Error de conexión. Por favor verifique su conexión a internet.'));
         }
 
-        return Promise.reject(error);
+        // Something happened in setting up the request that triggered an error
+        return Promise.reject(new Error('Error en la configuración de la solicitud. Por favor contacte al soporte técnico.'));
     }
 );
 

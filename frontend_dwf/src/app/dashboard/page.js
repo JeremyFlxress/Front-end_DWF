@@ -18,7 +18,7 @@ export default function Dashboard() {
   });
   const [recentActivities, setRecentActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -33,38 +33,44 @@ export default function Dashboard() {
 
         setIsLoading(true);
 
-        // Obtener datos del dashboard
-        const [booksData, loansData] = await Promise.all([
-          apiService.books.getAll(),
-          apiService.loans.getAll()
-        ]);
+        // Obtener total de libros
+        const booksResponse = await apiService.books.getAll();
+        const booksData = booksResponse._embedded?.books || [];
 
-        // Calcular préstamos atrasados
-        const today = new Date();
-        const activeLoans = loansData.filter(loan => !loan.returnedDate);
-        const lateLoans = activeLoans.filter(loan => new Date(loan.dueDate) < today);
+        // Obtener todos los préstamos sin paginación para estadísticas
+        const allLoansResponse = await apiService.loans.getAll();
+        const allLoansData = allLoansResponse._embedded?.bookLoans || [];
+        
+        // Calcular estadísticas
+        const activeLoans = allLoansData.filter(loan => loan.state === 'PRESTADO');
+        const overdueLoans = allLoansData.filter(loan => loan.state === 'VENCIDO');
 
-        // Actualizar datos del dashboard
         setDashboardData({
           librosTotal: booksData.length,
           prestamosActivos: activeLoans.length,
-          prestamosAtrasados: lateLoans.length
+          prestamosAtrasados: overdueLoans.length
         });
 
-        // Formatear datos para la tabla de actividades
-        const formattedActivities = loansData
-          .slice(0, 10) // Mostrar solo los 10 más recientes
-          .map(loan => ({
-            id: loan.id,
-            estudiante: loan.studentName,
-            libro: loan.bookTitle,
-            fechaPrestamo: new Date(loan.loanDate).toLocaleDateString(),
-            estado: loan.returnedDate ? 'Devuelto' : 
-                   new Date(loan.dueDate) < today ? 'Atrasado' : 'Activo'
-          }));
+        // Obtener préstamos recientes paginados y ordenados por fecha
+        const paginatedLoansResponse = await apiService.loans.getAll({
+          page: currentPage,
+          size: pageSize,
+          sort: 'startDate,desc'
+        });
+        const paginatedLoansData = paginatedLoansResponse._embedded?.bookLoans || [];
+
+        // Formatear actividades usando los campos exactos del backend
+        console.log('Loan data:', paginatedLoansData[0]); // Ver estructura de los datos
+        const formattedActivities = paginatedLoansData.map(loan => ({
+          id: loan.id,
+          libro: loan.book.title,
+          estudiante: loan.student.fullName,
+          fechaPrestamo: loan.startDate,
+          fechaDevolucion: loan.returnDate
+        }));
 
         setRecentActivities(formattedActivities);
-        setTotalItems(formattedActivities.length);
+        setTotalItems(paginatedLoansResponse.page.totalElements || 0);
 
       } catch (error) {
         console.error('Error al cargar datos del dashboard:', error);
@@ -77,15 +83,7 @@ export default function Dashboard() {
     };
 
     fetchDashboardData();
-  }, [router]);
-
-  // Calcular índices para paginación
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedActivities = recentActivities.slice(startIndex, endIndex);
-
-  // Calcular el número total de páginas
-  const totalPages = Math.ceil(totalItems / pageSize);
+  }, [router, currentPage, pageSize]);
 
   return (
     <div className="dashboard-container">
@@ -109,13 +107,13 @@ export default function Dashboard() {
               
               <div className="activity-section">
                 <h2 className="section-title">Actividad reciente</h2>
-                <ActivityTable activities={paginatedActivities} />
+                <ActivityTable activities={recentActivities} />
               </div>
               
               <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
+                currentPage={currentPage + 1} // Convert to 1-based for display
+                totalPages={Math.ceil(totalItems / pageSize)}
+                onPageChange={(page) => setCurrentPage(page - 1)} // Convert back to 0-based
                 pageSize={pageSize}
                 onPageSizeChange={setPageSize}
                 totalItems={totalItems}

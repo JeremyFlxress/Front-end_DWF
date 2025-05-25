@@ -12,8 +12,6 @@ const ActivityTable = ({ activities }) => {
             <th>Estudiante</th>
             <th>Fecha Préstamo</th>
             <th>Fecha Devolución</th>
-            <th>Estado</th>
-            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -24,14 +22,6 @@ const ActivityTable = ({ activities }) => {
               <td>{activity.estudiante}</td>
               <td>{activity.fechaPrestamo}</td>
               <td>{activity.fechaDevolucion}</td>
-              <td>
-                <span className={`status-badge ${activity.estado.toLowerCase()}`}>
-                  {activity.estado}
-                </span>
-              </td>
-              <td>
-                <button className="action-button">Acciones</button>
-              </td>
             </tr>
           ))}
         </tbody>

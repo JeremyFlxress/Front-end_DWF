@@ -87,8 +87,8 @@
   font-size: 12px;
 }
 
-.estado-no-disponible {
-  background-color: #f44336;
+.estado-no.disponible {
+  background-color: #f53224;
   color: white;
   padding: 4px 8px;
   border-radius: 4px;

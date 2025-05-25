@@ -1,9 +1,10 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Pagination from '../components/Pagination';
+import apiService from '@/config/apiService';
 import '../styles/catalogo.css';
 import '../styles/pagination.css';
 
@@ -11,26 +12,71 @@ export default function Catalogo() {
   const router = useRouter();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(5);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Datos de ejemplo
-  const [librosData, setLibrosData] = useState([
-    { codigo: 'AEP4001', titulo: 'Alicia en el país de las maravillas', autor: 'Autor 1', cantidad: 15, categoria: 'Ciencia Ficcion', disponibilidad: 'Disponible' },
-    { codigo: 'P24002', titulo: 'Libro 2', autor: 'Autor 2', cantidad: 15, categoria: 'Infantil', disponibilidad: 'No Disponible' },
-    { codigo: 'P24003', titulo: 'Libro 3', autor: 'Autor 3', cantidad: 24, categoria: 'Novela', disponibilidad: 'Disponible' },
-    { codigo: 'P24004', titulo: 'Libro 4', autor: 'Autor 4', cantidad: 12, categoria: 'Ciencia', disponibilidad: 'Disponible' },
-    { codigo: 'P24005', titulo: 'Libro 5', autor: 'Autor 5', cantidad: 8, categoria: 'Historia', disponibilidad: 'No Disponible' },
-    { codigo: 'P24006', titulo: 'Libro 6', autor: 'Autor 6', cantidad: 18, categoria: 'Ficción', disponibilidad: 'Disponible' },
-  ]);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [totalItems, setTotalItems] = useState(0);
+  const [libros, setLibros] = useState([]);
+
+  // Add debounce effect for search term
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(0); // Reset to first page when search term changes
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // Fetch books from backend
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          router.push('/login');
+          return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        
+        const queryParams = {
+          page: currentPage,
+          size: pageSize,
+        };
+        
+        if (debouncedSearchTerm.trim()) {
+          queryParams.title = debouncedSearchTerm.trim();
+        }
+
+        const response = await apiService.books.getAll(queryParams);
+        const booksData = response._embedded?.books || [];
+        setLibros(booksData);
+        setTotalItems(response.page.totalElements || 0);
+      } catch (error) {
+        console.error('Error al cargar libros:', error);
+        setError('Error al cargar los libros. Por favor, intente de nuevo.');
+        if (error.response?.status === 401) {
+          router.push('/login');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBooks();
+  }, [router, currentPage, pageSize, debouncedSearchTerm]);
 
   const handleNuevoLibro = () => {
     router.push('/nuevo-libro');
   };
 
-  const handleEdit = (codigo) => {
-    router.push('/editar-libro');
+  const handleEdit = (id) => {
+    router.push(`/editar-libro?id=${id}`);
   };
 
   const handleChangeStatus = (libro) => {
@@ -38,37 +84,30 @@ export default function Catalogo() {
     setShowConfirmDialog(true);
   };
 
-  const confirmStatusChange = () => {
+  const confirmStatusChange = async () => {
     if (selectedBook) {
-      setLibrosData(librosData.map(libro => 
-        libro.codigo === selectedBook.codigo
-          ? { 
-              ...libro, 
-              disponibilidad: libro.disponibilidad === 'Disponible' ? 'No Disponible' : 'Disponible'
-            }
-          : libro
-      ));
+      try {
+        setError(null);
+        
+        const updatedBook = {
+          ...selectedBook,
+          state: selectedBook.state === 'DISPONIBLE' ? 'NO_DISPONIBLE' : 'DISPONIBLE'
+        };
+
+        await apiService.books.update(selectedBook.id, updatedBook);
+        
+        setLibros(libros.map(libro => 
+          libro.id === selectedBook.id ? updatedBook : libro
+        ));
+
+        setShowConfirmDialog(false);
+        setSelectedBook(null);
+      } catch (error) {
+        console.error('Error al actualizar estado:', error);
+        setError('Error al actualizar el estado del libro. Por favor, intente de nuevo.');
+      }
     }
-    setShowConfirmDialog(false);
-    setSelectedBook(null);
   };
-
-  // Filtrar libros según el término de búsqueda
-  const filteredBooks = librosData.filter(libro => 
-    libro.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    libro.autor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    libro.codigo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Calcular índices para paginación
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  
-  // Obtener los libros de la página actual
-  const currentBooks = filteredBooks.slice(startIndex, endIndex);
-  
-  // Calcular el número total de páginas
-  const totalPages = Math.ceil(filteredBooks.length / pageSize);
 
   return (
     <div className="prestamo-container">
@@ -80,17 +119,17 @@ export default function Catalogo() {
         <div className="catalogo-container">
           <h2 className="section-title">Catálogo de Libros</h2>
           
+          {error && <div className="error-message">{error}</div>}
+          
           <div className="panel-container">
             <div className="search-container">
               <input 
                 type="text" 
-                placeholder="Buscar libro"
+                placeholder="Buscar libro por título"
                 className="search-input"
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1); // Resetear a primera página al buscar
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus
               />
               <button 
                 className="btn-nuevo-libro"
@@ -100,64 +139,69 @@ export default function Catalogo() {
               </button>
             </div>
             
-            <table className="tabla-catalogo">
-              <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Título</th>
-                  <th>Autor</th>
-                  <th>Cantidad</th>
-                  <th>Categoría</th>
-                  <th>Disponibilidad</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentBooks.map((libro) => (
-                  <tr key={libro.codigo}>
-                    <td>{libro.codigo}</td>
-                    <td>{libro.titulo}</td>
-                    <td>{libro.autor}</td>
-                    <td>{libro.cantidad}</td>
-                    <td>{libro.categoria}</td>
-                    <td>
-                      <span className={`estado-${libro.disponibilidad.toLowerCase().replace(' ', '-')}`}>
-                        {libro.disponibilidad}
-                      </span>
-                    </td>
-                    <td className="acciones">
-                      <button 
-                        className="btn-editar"
-                        onClick={() => handleEdit(libro.codigo)}
-                        title="Editar cantidad"
-                      >
-                        ✎
-                      </button>
-                      <button 
-                        className={`btn-toggle-status ${libro.disponibilidad === 'Disponible' ? 'disponible' : 'no-disponible'}`}
-                        onClick={() => handleChangeStatus(libro)}
-                        title={`Cambiar a ${libro.disponibilidad === 'Disponible' ? 'No Disponible' : 'Disponible'}`}
-                      >
-                        {libro.disponibilidad === 'Disponible' ? '✓' : '×'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {isLoading ? (
+              <div className="loading">Cargando...</div>
+            ) : (
+              <>
+                <table className="tabla-catalogo">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Título</th>
+                      <th>Autores</th>
+                      <th>Stock</th>
+                      <th>Categoría</th>
+                      <th>Disponibilidad</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {libros.map((libro) => (
+                      <tr key={libro.id}>
+                        <td>{libro.id}</td>
+                        <td>{libro.title}</td>
+                        <td>{libro.authors?.map(author => author.name).join(', ')}</td>
+                        <td>{libro.stock}</td>
+                        <td>{libro.category?.name}</td>
+                        <td>
+                          <span className={`estado-${libro.state.toLowerCase()}`}>
+                            {libro.state === 'DISPONIBLE' ? 'Disponible' : 'No Disponible'}
+                          </span>
+                        </td>
+                        <td className="acciones">
+                          <button 
+                            className="btn-editar"
+                            onClick={() => handleEdit(libro.id)}
+                            title="Editar libro"
+                          >
+                            ✎
+                          </button>
+                          <button 
+                            className={`btn-toggle-status ${libro.state === 'DISPONIBLE' ? 'disponible' : 'no-disponible'}`}
+                            onClick={() => handleChangeStatus(libro)}
+                            title={`Cambiar a ${libro.state === 'DISPONIBLE' ? 'No Disponible' : 'Disponible'}`}
+                          >
+                            {libro.state === 'DISPONIBLE' ? '✓' : '×'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
 
+                <Pagination
+                  currentPage={currentPage + 1}
+                  totalPages={Math.ceil(totalItems / pageSize)}
+                  onPageChange={(page) => setCurrentPage(page - 1)}
+                  pageSize={pageSize}
+                  onPageSizeChange={setPageSize}
+                  totalItems={totalItems}
+                />
+              </>
+            )}
           </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              pageSize={pageSize}
-              onPageSizeChange={setPageSize}
-              totalItems={filteredBooks.length}
-            />
         </div>
 
-        {/* Diálogo de confirmación */}
         {showConfirmDialog && (
           <div className="dialog-overlay">
             <div className="dialog-content">
@@ -166,8 +210,8 @@ export default function Catalogo() {
               </div>
               <div className="dialog-body">
                 <p>
-                  ¿Está seguro que quiere cambiar el estado del libro &quot;{selectedBook?.titulo}&quot; a 
-                  {selectedBook?.disponibilidad === 'Disponible' ? ' No Disponible' : ' Disponible'}?
+                  ¿Está seguro que quiere cambiar el estado del libro &quot;{selectedBook?.title}&quot; a 
+                  {selectedBook?.state === 'DISPONIBLE' ? ' No Disponible' : ' Disponible'}?
                 </p>
               </div>
               <div className="dialog-buttons">
