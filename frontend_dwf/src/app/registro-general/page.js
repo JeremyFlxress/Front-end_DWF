@@ -1,60 +1,99 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Pagination from '../components/Pagination';
+import apiService from '@/config/apiService';
+import '../styles/registroGeneral.css';
 import '../styles/pagination.css';
 
 export default function RegistroGeneral() {
+  const router = useRouter();
   const [busqueda, setBusqueda] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(5);
-  
-  // Datos de ejemplo - estos podrían venir de una API o props
-  const registrosData = [
-    { id: 'P24001', libro: 'Libro 1', estudiante: 'Estudiante 1', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 1' },
-    { id: 'P24002', libro: 'Libro 2', estudiante: 'Estudiante 2', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Pendiente', semana: 'Semana 2' },
-    { id: 'P24003', libro: 'Libro 3', estudiante: 'Estudiante 3', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Atrasado', semana: 'Semana 3' },
-    { id: 'P24004', libro: 'Libro 4', estudiante: 'Estudiante 4', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 1' },
-    { id: 'P24005', libro: 'Libro 5', estudiante: 'Estudiante 5', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 2' },
-    { id: 'P24006', libro: 'Libro 6', estudiante: 'Estudiante 6', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Entregado', semana: 'Semana 3' },
-    { id: 'P24007', libro: 'Libro 7', estudiante: 'Estudiante 7', fechaPrestamo: '10/05/2024', fechaDevolucion: '10/05/2024', estado: 'Pendiente', semana: 'Semana 1' },
-  ];
+  const [totalItems, setTotalItems] = useState(0);
+  const [registros, setRegistros] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleExportar = () => {
-    console.log('Exportando datos...');
+  const fetchRegistros = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      const params = {
+        page: currentPage,
+        size: pageSize,
+        state: ['ENTREGADO'] // Solo mostrar libros entregados
+      };
+
+      const response = await apiService.loans.getAll(params);
+      const loansData = response._embedded?.bookLoans || [];
+      
+      const registrosFormateados = loansData.map(loan => ({
+        id: loan.id,
+        libro: loan.book.title,
+        estudiante: loan.student.fullName,
+        fechaPrestamo: loan.startDate,
+        fechaDevolucion: loan.returnDate,
+        estado: 'Entregado',
+        semana: obtenerSemana(loan.startDate)
+      }));
+
+      setRegistros(registrosFormateados);
+      setTotalItems(response.page.totalElements || 0);
+
+    } catch (error) {
+      console.error('Error al cargar registros:', error);
+      setError('Error al cargar los datos: ' + (error.message || 'Por favor, intente de nuevo.'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRegistros();
+  }, [currentPage, pageSize]);
+
+  const obtenerSemana = (fecha) => {
+    const [dia, mes, anio] = fecha.split('-').map(Number);
+    const date = new Date(anio, mes - 1, dia);
+    const inicioAno = new Date(anio, 0, 1);
+    const semana = Math.ceil(((date - inicioAno) / 86400000 + inicioAno.getDay() + 1) / 7);
+    return `Semana ${semana}`;
   };
 
   const handleSearch = (e) => {
     setBusqueda(e.target.value);
-    setCurrentPage(1); // Resetear a primera página al buscar
   };
 
+  const handleExportar = () => {
+    // TODO: Implementar exportación
+    console.log('Exportando datos...');
+  };
 
   // Filtrar registros según búsqueda
   const registrosFiltrados = busqueda 
-    ? registrosData.filter(registro => 
+    ? registros.filter(registro => 
         registro.libro.toLowerCase().includes(busqueda.toLowerCase()) || 
         registro.estudiante.toLowerCase().includes(busqueda.toLowerCase()) ||
-        registro.id.toLowerCase().includes(busqueda.toLowerCase())
+        registro.id.toString().includes(busqueda.toLowerCase())
       )
-    : registrosData;
+    : registros;
 
-  // Calcular índices para paginación
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  
-  // Obtener los registros de la página actual
-  const currentRegistros = registrosFiltrados.slice(startIndex, endIndex);
-  
-  // Calcular el número total de páginas
-  const totalPages = Math.ceil(registrosFiltrados.length / pageSize);
+  if (isLoading) return <div>Cargando...</div>;
 
   return (
     <div className="app-container">
-      <div className="sidebar-wrapper">
-        <Sidebar />
-      </div>
+      <Sidebar />
       
       <div className="content-wrapper">
         <Header />
@@ -67,7 +106,7 @@ export default function RegistroGeneral() {
               <div className="search-container">
                 <input
                   type="text"
-                  placeholder="Buscar registro..."
+                  placeholder="Buscar por libro, estudiante o ID..."
                   className="input-busqueda"
                   value={busqueda}
                   onChange={handleSearch}
@@ -81,45 +120,53 @@ export default function RegistroGeneral() {
                 Exportar
                 <span className="exportar-icon">⤓</span>
               </button>
-            </div>     
+            </div>
+
+            {error && (
+              <div className="error-message" style={{ color: 'red', padding: '10px', margin: '10px 0' }}>
+                {error}
+              </div>
+            )}
             
-            <table className="tabla-registro">
-              <thead>
-                <tr>
-                  <th>ID Prestamo</th>
-                  <th>Libro</th>
-                  <th>Estudiante</th>
-                  <th>Fecha Préstamo</th>
-                  <th>Fecha Devolución</th>
-                  <th>Estado</th>
-                  <th>Semana</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentRegistros.map((registro, index) => (
-                  <tr key={index}>
-                    <td>{registro.id}</td>
-                    <td>{registro.libro}</td>
-                    <td>{registro.estudiante}</td>
-                    <td>{registro.fechaPrestamo}</td>
-                    <td>{registro.fechaDevolucion}</td>
-                    <td>{registro.estado}</td>
-                    <td>{registro.semana}</td>
+            <div className="table-container">
+              <table className="tabla-registro">
+                <thead>
+                  <tr>
+                    <th>ID Prestamo</th>
+                    <th>Libro</th>
+                    <th>Estudiante</th>
+                    <th>Fecha Préstamo</th>
+                    <th>Fecha Devolución</th>
+                    <th>Estado</th>
+                    <th>Semana</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {registrosFiltrados.map((registro) => (
+                    <tr key={registro.id}>
+                      <td>{registro.id}</td>
+                      <td>{registro.libro}</td>
+                      <td>{registro.estudiante}</td>
+                      <td>{registro.fechaPrestamo}</td>
+                      <td>{registro.fechaDevolucion}</td>
+                      <td>{registro.estado}</td>
+                      <td>{registro.semana}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             
-          </div>
-        </div>
             <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
+              currentPage={currentPage + 1}
+              totalPages={Math.ceil(totalItems / pageSize)}
+              onPageChange={(page) => setCurrentPage(page - 1)}
               pageSize={pageSize}
               onPageSizeChange={setPageSize}
-              totalItems={registrosFiltrados.length}
+              totalItems={totalItems}
             />
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -169,6 +169,10 @@
 
 .activity-table-container {
   overflow-x: auto;
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .activity-table {
@@ -188,6 +192,13 @@
   font-weight: 600;
   color: #555;
   background-color: #f9f9f9;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.activity-table th:hover {
+  background-color: #f0f0f0;
 }
 
 .activity-table tr:last-child td {
@@ -200,9 +211,26 @@
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
-  text-transform: uppercase;
+  text-transform: capitalize;
+}
+
+.estado-prestado {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.estado-vencido {
+  background-color: #fbe9e7;
+  color: #d32f2f;
+}
+
+.estado-entregado {
   background-color: #e8f5e9;
   color: #2e7d32;
+}
+
+.activity-table tbody tr:hover {
+  background-color: #f8f9fa;
 }
 
 .action-button {

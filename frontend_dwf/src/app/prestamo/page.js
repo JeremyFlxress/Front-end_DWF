@@ -16,31 +16,67 @@ export default function PrestamoForm() {
   const [students, setStudents] = useState([]);
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);  // Format date functions
+  const [error, setError] = useState(null);
+
+  // Format date functions
   const formatDateForInput = (dateStr) => {
     if (!dateStr) return '';
-    // Handle both backend format (dd-MM-yyyy) and ISO format (yyyy-MM-dd)
-    const parts = dateStr.includes('-') ? dateStr.split('-') : [];
-    if (parts.length !== 3) return '';
     
-    // If it's already in yyyy-MM-dd format, return as is
-    if (parts[0].length === 4) return dateStr;
-    
-    // Convert from dd-MM-yyyy to yyyy-MM-dd
-    const [day, month, year] = parts;
-    return `${year}-${month}-${day}`;
+    try {
+      // Expected format is dd-MM-yyyy
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return '';
+      
+      const [day, month, year] = parts.map(Number);
+      
+      // Validate parts
+      if (!day || !month || !year) return '';
+      if (day < 1 || day > 31) return '';
+      if (month < 1 || month > 12) return '';
+      if (year < 2000 || year > 2100) return '';
+      
+      // Convert to yyyy-MM-dd for input type="date"
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    } catch (error) {
+      console.error('Error al formatear fecha para input:', error);
+      return '';
+    }
   };
 
   const formatDateForBackend = (dateStr) => {
     if (!dateStr) return '';
-    // Convert from yyyy-MM-dd to dd-MM-yyyy
-    const [year, month, day] = dateStr.split('-');
-    if (!year || !month || !day) return '';
-    return `${day}-${month}-${year}`;
-  };  const [formData, setFormData] = useState({
+    
+    try {
+      // Input format is yyyy-MM-dd, convert to dd-MM-yyyy
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        console.error('Fecha inválida:', dateStr);
+        return '';
+      }
+      
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}-${month}-${year}`;
+    } catch (error) {
+      console.error('Error formateando fecha:', error);
+      return '';
+    }
+  };
+
+  // Inicializar con la fecha actual en formato dd-MM-yyyy
+  const today = new Date();
+  const initialReturnDate = [
+    String(today.getDate()).padStart(2, '0'),
+    String(today.getMonth() + 1).padStart(2, '0'),
+    today.getFullYear()
+  ].join('-');
+
+  const [formData, setFormData] = useState({
     carnet: '',
     idBook: '',
-    returnDate: formatDateForBackend(new Date().toISOString().split('T')[0])
+    returnDate: initialReturnDate
   });
 
   useEffect(() => {
@@ -132,70 +168,72 @@ export default function PrestamoForm() {
     setError(null);
     
     try {
-      // Basic validations
+      // 1. Validaciones básicas
       if (!formData.carnet || !formData.idBook || !formData.returnDate) {
-        setError('Por favor complete todos los campos');
-        return;
+        throw new Error('Por favor complete todos los campos');
       }
 
-      // Validate return date format
-      const dateFormatRegex = /^\d{2}-\d{2}-\d{4}$/;
-      if (!dateFormatRegex.test(formData.returnDate)) {
-        setError('El formato de la fecha debe ser dd-MM-yyyy');
-        return;
+      // 2. Validar estudiante
+      const selectedStudent = students.find(student => student.value === formData.carnet);
+      if (!selectedStudent) {
+        throw new Error('El estudiante seleccionado no es válido');
       }
 
-      // Convert dd-MM-yyyy to Date object for validation
+      // 3. Validar libro
+      const bookId = parseInt(formData.idBook, 10);
+      if (isNaN(bookId)) {
+        throw new Error('El ID del libro debe ser un número válido');
+      }
+      const selectedBook = books.find(book => book.value === bookId);
+      if (!selectedBook) {
+        throw new Error('El libro seleccionado no es válido');
+      }
+
+      // 4. Validar y formatear fecha
+      if (!formData.returnDate.match(/^\d{2}-\d{2}-\d{4}$/)) {
+        throw new Error('El formato de fecha debe ser dd-MM-yyyy');
+      }
+
       const [day, month, year] = formData.returnDate.split('-').map(Number);
       const returnDate = new Date(year, month - 1, day);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
+      
+      if (isNaN(returnDate.getTime())) {
+        throw new Error('La fecha proporcionada no es válida');
+      }
+      
       if (returnDate < today) {
-        setError('La fecha de devolución no puede ser anterior a hoy');
-        return;
+        throw new Error('La fecha de devolución no puede ser anterior a hoy');
       }
 
-      // Validate selected book availability
-      const selectedBook = books.find(book => book.value === formData.idBook);
-      if (!selectedBook) {
-        setError('El libro seleccionado no está disponible');
-        return;
-      }
+      // 5. Preparar datos para el envío
+      const loanData = {
+        carnet: formData.carnet.trim(),
+        idBook: bookId,
+        returnDate: formData.returnDate
+      };
+      
+      // Log para depuración
+      console.log('Datos a enviar:', {
+        carnet: typeof loanData.carnet + ': ' + loanData.carnet,
+        idBook: typeof loanData.idBook + ': ' + loanData.idBook,
+        returnDate: typeof loanData.returnDate + ': ' + loanData.returnDate,
+        rawData: loanData
+      });
 
-      // Validate student exists
-      const selectedStudent = students.find(student => student.value === formData.carnet);
-      if (!selectedStudent) {
-        setError('El estudiante seleccionado no es válido');
-        return;
-      }
-
-      // Format data for submission
-const loanData = {
-  carnet: formData.carnet,
-  idBook: parseInt(formData.idBook, 10),
-  returnDate: formData.returnDate
-};
-
-
-      console.log('Sending loan data:', loanData);
-
-      // Create loan
+      // 6. Crear préstamo
       const response = await apiService.loans.create(loanData);
-      console.log('Loan creation response:', response);
-
+      
       if (response?.id) {
         alert('Préstamo registrado exitosamente');
         router.push('/librosactivos');
       } else {
-        throw new Error('La respuesta del servidor no incluye el ID del préstamo');
+        throw new Error('No se pudo completar el registro del préstamo');
       }
     } catch (error) {
-      console.error('Error:', error);
-      const errorMessage = error.response?.data?.message || 
-                         error.message || 
-                         'Error al procesar el préstamo. Verifique los datos e intente nuevamente.';
-      setError(errorMessage);
+      console.error('Error en el registro del préstamo:', error);
+      setError(error.message || 'Error al procesar el préstamo. Por favor verifique los datos e intente nuevamente.');
     }
   };
 
@@ -262,13 +300,23 @@ const loanData = {
                     inputValue ? "No se encontraron libros" : "Escriba para buscar..."}
                 />
               </div>              <div className="form-group">
-                <label htmlFor="returnDate">Fecha de Devolución:</label>                <input
+                <label htmlFor="returnDate">Fecha de Devolución:</label>
+                <input
                   type="date"
                   id="returnDate"
                   name="returnDate"
-                  value={formData.returnDate ? formatDateForInput(formData.returnDate) : ''}
+                  value={formatDateForInput(formData.returnDate)}
                   onChange={(e) => {
-                    const backendDate = formatDateForBackend(e.target.value);
+                    const inputDate = e.target.value; // format: yyyy-MM-dd
+                    if (!inputDate) return;
+
+                    // Convert to backend format (dd-MM-yyyy)
+                    const date = new Date(inputDate);
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    const backendDate = `${day}-${month}-${year}`;
+
                     setFormData(prev => ({
                       ...prev,
                       returnDate: backendDate

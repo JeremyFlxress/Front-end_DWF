@@ -31,46 +31,75 @@ export default function Dashboard() {
           return;
         }
 
-        setIsLoading(true);
+        setIsLoading(true);        // Obtener total de libros
+        const booksResponse = await apiService.books.getAll({ page: 0, size: 1 });
+        const totalBooks = booksResponse.page?.totalElements || 0;
 
-        // Obtener total de libros
-        const booksResponse = await apiService.books.getAll();
-        const booksData = booksResponse._embedded?.books || [];
+        // Obtener todos los préstamos sin filtrar por estado
+        const allLoansResponse = await apiService.loans.getAll({
+          page: 0,
+          size: 1000
+        });
 
-        // Obtener todos los préstamos sin paginación para estadísticas
-        const allLoansResponse = await apiService.loans.getAll();
-        const allLoansData = allLoansResponse._embedded?.bookLoans || [];
+        const allLoans = allLoansResponse._embedded?.bookLoans || [];
+        const today = new Date();
+        let prestamosActivos = 0;
+        let prestamosAtrasados = 0;        // Contar préstamos activos y atrasados del total
+        allLoans.forEach(loan => {
+          // Solo contar préstamos que no estén ENTREGADOS
+          if (loan.state !== 'ENTREGADO') {
+            const returnDate = new Date(loan.returnDate);
+            if (returnDate < today) {
+              prestamosAtrasados++;
+            } else {
+              prestamosActivos++;
+            }
+          }
+        });
+
+        // Obtener préstamos para la tabla con paginación
+        const recentLoansResponse = await apiService.loans.getAll({
+          page: currentPage,
+          size: pageSize
+        });
+
+        const recentLoansData = recentLoansResponse._embedded?.bookLoans || [];
         
-        // Calcular estadísticas
-        const activeLoans = allLoansData.filter(loan => loan.state === 'PRESTADO');
-        const overdueLoans = allLoansData.filter(loan => loan.state === 'VENCIDO');
+        const formattedActivities = recentLoansData.map(loan => {
+          const startDate = new Date(loan.startDate);
+          const returnDate = new Date(loan.returnDate);
+          let estadoActual = loan.state;
+            // Actualizar estado visual basado en la fecha si está PRESTADO
+          if (loan.state === 'PRESTADO') {
+            if (returnDate < today) {
+              estadoActual = 'VENCIDO';
+            }
+          }
+          
+          const dateOptions = { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit'
+          };
+          
+          return {
+            id: loan.id,
+            libro: loan.book.title,
+            estudiante: loan.student.fullName,
+            fechaPrestamo: startDate.toLocaleDateString('es-ES', dateOptions),
+            fechaDevolucion: returnDate.toLocaleDateString('es-ES', dateOptions),
+            estado: estadoActual
+          };
+        });
 
         setDashboardData({
-          librosTotal: booksData.length,
-          prestamosActivos: activeLoans.length,
-          prestamosAtrasados: overdueLoans.length
+          librosTotal: totalBooks,
+          prestamosActivos: prestamosActivos,
+          prestamosAtrasados: prestamosAtrasados
         });
-
-        // Obtener préstamos recientes paginados y ordenados por fecha
-        const paginatedLoansResponse = await apiService.loans.getAll({
-          page: currentPage,
-          size: pageSize,
-          sort: 'startDate,desc'
-        });
-        const paginatedLoansData = paginatedLoansResponse._embedded?.bookLoans || [];
-
-        // Formatear actividades usando los campos exactos del backend
-        console.log('Loan data:', paginatedLoansData[0]); // Ver estructura de los datos
-        const formattedActivities = paginatedLoansData.map(loan => ({
-          id: loan.id,
-          libro: loan.book.title,
-          estudiante: loan.student.fullName,
-          fechaPrestamo: loan.startDate,
-          fechaDevolucion: loan.returnDate
-        }));
 
         setRecentActivities(formattedActivities);
-        setTotalItems(paginatedLoansResponse.page.totalElements || 0);
+        setTotalItems(recentLoansResponse.page?.totalElements || 0);
 
       } catch (error) {
         console.error('Error al cargar datos del dashboard:', error);
@@ -101,7 +130,7 @@ export default function Dashboard() {
             <>
               <div className="cards-container">
                 <DashboardCard title="Libros Totales" value={dashboardData.librosTotal} />
-                <DashboardCard title="Préstamos Activos" value={dashboardData.prestamosActivos} />
+                <DashboardCard title="Préstamos Pedientes" value={dashboardData.prestamosActivos} />
                 <DashboardCard title="Préstamos Atrasados" value={dashboardData.prestamosAtrasados} />
               </div>
               

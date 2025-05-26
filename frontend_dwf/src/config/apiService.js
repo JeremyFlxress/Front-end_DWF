@@ -4,11 +4,10 @@ import { API_ROUTES } from './apiRoutes';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 const handleError = (error, context) => {
-    // Log the full error for debugging
-    console.error(`Response error:`, error.response || error);
+    console.error(`Error details for ${context}:`, error);
     
     // Get the most appropriate error message
-    let errorMessage = 'Error en la operación. Por favor, intente de nuevo.';
+    let errorMessage;
     
     if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -16,9 +15,14 @@ const handleError = (error, context) => {
         errorMessage = error.response.data.error;
     } else if (error.message) {
         errorMessage = error.message;
+    } else {
+        errorMessage = `Error ${context}. Por favor intente más tarde.`;
     }
     
+    // Log the error for debugging
     console.error(`Error ${context}:`, errorMessage);
+    
+    // Throw a new error with the message
     throw new Error(errorMessage);
 };
 
@@ -99,32 +103,64 @@ const loans = {
         } catch (error) {
             handleError(error, 'obteniendo préstamos');
         }
-    },
-    
-    create: async (loanData) => {
+    },      create: async (loanData) => {
         try {
+            console.log('Datos recibidos en create:', loanData);
+
             // Validar que todos los campos requeridos estén presentes
-            if (!loanData.carnet || !loanData.idBook || !loanData.returnDate) {
-                throw new Error('Datos incompletos. Por favor complete todos los campos.');
+            if (!loanData.carnet?.trim()) {
+                throw new Error('El carnet del estudiante es requerido');
+            }
+            if (!loanData.idBook || isNaN(Number(loanData.idBook))) {
+                throw new Error('El ID del libro es requerido y debe ser un número válido');
+            }
+            if (!loanData.returnDate) {
+                throw new Error('La fecha de devolución es requerida');
             }
 
             // Validar formato de fecha (debe ser dd-MM-yyyy)
-            const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
+            const dateRegex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$/;
             if (!dateRegex.test(loanData.returnDate)) {
-                throw new Error('Formato de fecha inválido. Debe ser dd-MM-yyyy');
+                console.error('Fecha inválida:', loanData.returnDate);
+                throw new Error('El formato de fecha debe ser dd-MM-yyyy');
             }
 
-            // Limpiar datos antes de enviar
+            // Validar que la fecha sea válida y futura
+            const [day, month, year] = loanData.returnDate.split('-').map(Number);
+            const returnDate = new Date(year, month - 1, day);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (isNaN(returnDate.getTime())) {
+                throw new Error('La fecha proporcionada no es válida');
+            }
+
+            if (returnDate < today) {
+                throw new Error('La fecha de devolución no puede ser anterior a hoy');
+            }
+
+            // Preparar datos para el envío
             const cleanLoanData = {
-                carnet: loanData.carnet,
-                idBook: loanData.idBook,
-                returnDate: loanData.returnDate,
-                state: 'PRESTADO'  // Siempre enviar estado inicial como PRESTADO
+                carnet: String(loanData.carnet).trim(),
+                idBook: Number(loanData.idBook),
+                returnDate: loanData.returnDate // Mantener el formato dd-MM-yyyy
             };
+
+            console.log('Datos a enviar al backend:', {
+                ...cleanLoanData,
+                types: {
+                    carnet: typeof cleanLoanData.carnet,
+                    idBook: typeof cleanLoanData.idBook,
+                    returnDate: typeof cleanLoanData.returnDate
+                }
+            });
 
             const response = await axiosInstance.post(API_ROUTES.LOANS, cleanLoanData);
             return response.data;
         } catch (error) {
+            if (error.response?.data?.message) {
+                throw new Error(error.response.data.message);
+            }
             handleError(error, 'creando préstamo');
         }
     },
@@ -196,6 +232,24 @@ const loans = {
             return response.data;
         } catch (error) {
             handleError(error, 'obteniendo préstamos por estado');
+        }
+    },
+
+    updateState: async (id, newState) => {
+        try {
+            // Validate the state
+            const validStates = ['PRESTADO', 'VENCIDO', 'ENTREGADO'];
+            if (!validStates.includes(newState)) {
+                throw new Error('Estado inválido');
+            }
+
+            const response = await axiosInstance.patch(API_ROUTES.LOAN_BY_ID(id), {
+                state: newState
+            });
+            
+            return response.data;
+        } catch (error) {
+            handleError(error, 'actualizando estado del préstamo');
         }
     }
 };

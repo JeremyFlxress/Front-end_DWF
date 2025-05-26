@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Environment configuration
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT, 10) || 30000;
 const isDevelopment = process.env.NODE_ENV === 'development';
 
