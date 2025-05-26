@@ -4,10 +4,12 @@ import Image from 'next/image';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 import apiService from '@/config/apiService';
+import { useUser } from '../context/UserContext';
 import styles from '../styles/login.css'; 
 
 const Login = () => {
   const router = useRouter();
+  const { updateUser } = useUser();
   const [credentials, setCredentials] = useState({
     username: '',
     password: ''
@@ -27,6 +29,11 @@ const Login = () => {
       
       if (response && response.token) {
         localStorage.setItem('token', response.token);
+        // Guardar información del usuario
+        updateUser({
+          username: credentials.username,
+          token: response.token
+        });
         console.log('Token guardado, redirigiendo...');
         router.push('/dashboard');
       } else {

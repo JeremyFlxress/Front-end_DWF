@@ -1,8 +1,11 @@
 'use client';
 import React from 'react';
 import Image from 'next/image';
+import { useUser } from '../context/UserContext';
 
-const Header = ({ title = "Sistema de Biblioteca", username = "Admin" }) => {
+const Header = ({ title = "Sistema de Biblioteca" }) => {
+  const { user } = useUser();
+  
   return (
     <header className="main-header">
       <div className="header-title">
@@ -19,7 +22,7 @@ const Header = ({ title = "Sistema de Biblioteca", username = "Admin" }) => {
             className="avatar-image"
           />
         </div>
-        <span className="username">{username}</span>
+        <span className="username">{user?.username || 'Usuario'}</span>
       </div>
     </header>
   );

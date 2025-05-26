@@ -35,8 +35,10 @@ const auth = {
             handleError(error, 'en login');
         }
     },
-    logout: async () => {
+    logout: () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
     }
 };
 

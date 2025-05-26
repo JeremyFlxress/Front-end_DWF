@@ -1,3 +1,4 @@
+import { UserProvider } from './context/UserContext';
 import './styles/global.css';
 import './styles/login.css';
 import './styles/dashboard.css';
@@ -18,7 +19,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body>
-        {children}
+        <UserProvider>
+          {children}
+        </UserProvider>
       </body>
     </html>
   );
