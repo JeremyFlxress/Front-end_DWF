@@ -201,18 +201,25 @@ const loans = {
                 throw new Error('No hay token de autenticación');
             }
 
-            // Calcular nueva fecha de devolución (1 mes después de hoy)
-            const today = new Date();
-            const nextMonth = new Date(today.setMonth(today.getMonth() + 1));
+            // Get current loan to check state
+            const currentLoan = await axiosInstance.get(`${API_ROUTES.LOANS}/${id}`);
+            if (currentLoan.data.state === 'ENTREGADO') {
+                throw new Error('No se puede renovar un préstamo entregado');
+            }
+
+            // Calculate new return date (1 month after current return date)
+            const [day, month, year] = currentLoan.data.returnDate.split('-').map(Number);
+            const nextReturnDate = new Date(year, month - 1, day);
+            nextReturnDate.setMonth(nextReturnDate.getMonth() + 1);
             
             // Format date as dd-MM-yyyy
-            const day = String(nextMonth.getDate()).padStart(2, '0');
-            const month = String(nextMonth.getMonth() + 1).padStart(2, '0');
-            const year = nextMonth.getFullYear();
-            const formattedDate = `${day}-${month}-${year}`;
+            const newDay = String(nextReturnDate.getDate()).padStart(2, '0');
+            const newMonth = String(nextReturnDate.getMonth() + 1).padStart(2, '0');
+            const newYear = nextReturnDate.getFullYear();
+            const formattedDate = `${newDay}-${newMonth}-${newYear}`;
 
-            const response = await axiosInstance.post(API_ROUTES.RENEW_LOAN(id), {
-                state: 'PRESTADO', // Mantener el estado como prestado
+            // Only send returnDate in the update request
+            const response = await axiosInstance.put(`${API_ROUTES.LOANS}/${id}`, {
                 returnDate: formattedDate
             });
             
@@ -220,15 +227,26 @@ const loans = {
         } catch (error) {
             handleError(error, 'renovando préstamo');
         }
-    },
-
-    delete: async (id) => {
+    },delete: async (id) => {
         try {
-            await axiosInstance.delete(API_ROUTES.LOAN_BY_ID(id));
+            // Instead of DELETE, we'll use PUT to update the state to ENTREGADO
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            const formattedDate = `${day}-${month}-${year}`;
+
+            // Send only the minimum required fields
+            const response = await axiosInstance.put(`${API_ROUTES.LOANS}/${id}`, {
+                state: 'ENTREGADO',
+                returnDate: formattedDate
+            });
+            
+            return response.data;
         } catch (error) {
             handleError(error, 'eliminando préstamo');
         }
-    },    generateReport: async () => {
+    },generateReport: async () => {
         try {
             const response = await axiosInstance.get(API_ROUTES.GENERATE_REPORT, {
                 responseType: 'blob',
@@ -255,22 +273,51 @@ const loans = {
         } catch (error) {
             handleError(error, 'obteniendo préstamos por estado');
         }
-    },
-
-    updateState: async (id, newState) => {
+    },    updateState: async (id, newState) => {
         try {
+            console.log('Starting updateState with:', { id, newState });
+            
             // Validate the state
             const validStates = ['PRESTADO', 'VENCIDO', 'ENTREGADO'];
             if (!validStates.includes(newState)) {
                 throw new Error('Estado inválido');
             }
 
-            const response = await axiosInstance.patch(API_ROUTES.LOAN_BY_ID(id), {
-                state: newState
+            // Get the current loan data
+            console.log('Fetching current loan data...');
+            const currentLoanResponse = await axiosInstance.get(`${API_ROUTES.LOANS}/${id}`);
+            const currentLoan = currentLoanResponse.data;
+            
+            console.log('Current loan data:', currentLoan);
+
+            // Format today's date in dd-MM-yyyy format for ENTREGADO state
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            }).split('/').join('-');
+
+            // Only send state and returnDate as required by BookLoanUpdateRequest
+            const updateData = {
+                state: newState,
+                returnDate: newState === 'ENTREGADO' ? formattedDate : currentLoan.returnDate
+            };
+
+            console.log('Sending update data:', updateData);
+            const result = await axiosInstance.put(`${API_ROUTES.LOANS}/${id}`, updateData);
+            console.log('Update response:', result.data);
+            return result.data;
+        } catch (error) {
+            console.error('Error details:', {
+                error,
+                response: error.response?.data,
+                status: error.response?.status
             });
             
-            return response.data;
-        } catch (error) {
+            if (error.response?.data?.message) {
+                throw new Error(error.response.data.message);
+            }
             handleError(error, 'actualizando estado del préstamo');
         }
     },

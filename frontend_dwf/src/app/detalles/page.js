@@ -61,6 +61,12 @@ export default function Page() {
         return;
       }
 
+      // Verificar si el préstamo está en un estado que permite renovación
+      if (prestamoData.estado === 'Entregado') {
+        alert('No se puede renovar un préstamo ya entregado');
+        return;
+      }
+
       if (!window.confirm('¿Está seguro que desea renovar este préstamo?')) {
         return;
       }
@@ -85,21 +91,32 @@ export default function Page() {
   };
 
   const handleEliminar = async () => {
+    // No permitir eliminar préstamos entregados
     if (prestamoData?.estado === 'Entregado') {
       alert('No se puede eliminar un préstamo ya entregado');
+      return;
+    }
+
+    // Solo permitir eliminar préstamos pendientes o atrasados
+    if (prestamoData?.estado !== 'Pendiente' && prestamoData?.estado !== 'Atrasado') {
+      alert('Solo se pueden eliminar préstamos pendientes o atrasados');
       return;
     }
 
     if (window.confirm('¿Está seguro de que desea eliminar este préstamo?')) {
       try {
         const loanId = searchParams.get('id');
-        if (!loanId) return;
+        if (!loanId) {
+          throw new Error('ID de préstamo no encontrado');
+          return;
+        }
 
         await apiService.loans.delete(loanId);
+        alert('Préstamo eliminado exitosamente');
         router.push('/librosactivos');
       } catch (error) {
         console.error('Error al eliminar préstamo:', error);
-        alert('Error al eliminar el préstamo. Por favor, intente de nuevo.');
+        alert(error.message || 'Error al eliminar el préstamo. Por favor, intente de nuevo.');
       }
     }
   };

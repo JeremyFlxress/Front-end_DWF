@@ -37,15 +37,13 @@ export default function RegistroGeneral() {
 
       const response = await apiService.loans.getAll(params);
       const loansData = response._embedded?.bookLoans || [];
-      
-      const registrosFormateados = loansData.map(loan => ({
+        const registrosFormateados = loansData.map(loan => ({
         id: loan.id,
         libro: loan.book.title,
         estudiante: loan.student.fullName,
         fechaPrestamo: loan.startDate,
         fechaDevolucion: loan.returnDate,
-        estado: 'Entregado',
-        semana: obtenerSemana(loan.startDate)
+        estado: 'Entregado'
       }));
 
       setRegistros(registrosFormateados);
@@ -62,16 +60,7 @@ export default function RegistroGeneral() {
   useEffect(() => {
     fetchRegistros();
   }, [currentPage, pageSize]);
-
-  const obtenerSemana = (fecha) => {
-    const [dia, mes, anio] = fecha.split('-').map(Number);
-    const date = new Date(anio, mes - 1, dia);
-    const inicioAno = new Date(anio, 0, 1);
-    const semana = Math.ceil(((date - inicioAno) / 86400000 + inicioAno.getDay() + 1) / 7);
-    return `Semana ${semana}`;
-  };
-
-  const handleSearch = (e) => {
+  const handleSearch= (e) => {
     setBusqueda(e.target.value);
   };
 
@@ -131,14 +120,12 @@ export default function RegistroGeneral() {
             <div className="table-container">
               <table className="tabla-registro">
                 <thead>
-                  <tr>
-                    <th>ID Prestamo</th>
+                  <tr>                    <th>ID Prestamo</th>
                     <th>Libro</th>
                     <th>Estudiante</th>
                     <th>Fecha Préstamo</th>
                     <th>Fecha Devolución</th>
                     <th>Estado</th>
-                    <th>Semana</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -147,10 +134,8 @@ export default function RegistroGeneral() {
                       <td>{registro.id}</td>
                       <td>{registro.libro}</td>
                       <td>{registro.estudiante}</td>
-                      <td>{registro.fechaPrestamo}</td>
-                      <td>{registro.fechaDevolucion}</td>
+                      <td>{registro.fechaPrestamo}</td>                      <td>{registro.fechaDevolucion}</td>
                       <td>{registro.estado}</td>
-                      <td>{registro.semana}</td>
                     </tr>
                   ))}
                 </tbody>

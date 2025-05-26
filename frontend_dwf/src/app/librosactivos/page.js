@@ -17,14 +17,13 @@ export default function LibrosActivos() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [selectedLibro, setSelectedLibro] = useState(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  // Mapeo de estados a texto para mostrar
+  const [selectedLibro, setSelectedLibro] = useState(null);  const [isUpdating, setIsUpdating] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  // Mapeo de estados a texto para mostrar (solo estados activos)
   const estadosTexto = {
     'PRESTADO': 'Pendiente',
-    'VENCIDO': 'Atrasado',
-    'ENTREGADO': 'Entregado'
+    'VENCIDO': 'Atrasado'
   };
 
   const fetchLibros = async () => {
@@ -40,10 +39,9 @@ export default function LibrosActivos() {
       
       let params = {
         page: currentPage,
-        size: pageSize
+        size: pageSize,
       };
 
-      // Si no es TODOS, filtrar por estado específico
       if (filtroEstado !== 'TODOS') {
         params.state = filtroEstado;
       }
@@ -51,34 +49,43 @@ export default function LibrosActivos() {
       const response = await apiService.loans.getAll(params);
       const loansData = response._embedded?.bookLoans || [];
       
-      // Procesar los préstamos
-      const librosFormateados = loansData.map(loan => {
-        const fechaDevolucion = loan.returnDate;
-        const [dia, mes, anio] = fechaDevolucion.split('-').map(Number);
-        const fechaLimite = new Date(anio, mes - 1, dia);
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
+      const librosFormateados = await Promise.all(loansData
+        .filter(loan => loan.state !== 'ENTREGADO')
+        .filter(loan => 
+          !searchTerm || 
+          loan.book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          loan.student.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        .map(async loan => {
+          const fechaDevolucion = loan.returnDate;
+          const [dia, mes, anio] = fechaDevolucion.split('-').map(Number);
+          const fechaLimite = new Date(anio, mes - 1, dia);
+          const hoy = new Date();
+          hoy.setHours(0, 0, 0, 0);
+          
+          let estado = loan.state;
+          
+          if (estado === 'PRESTADO' && hoy > fechaLimite) {
+            try {
+              await apiService.loans.updateState(loan.id, 'VENCIDO');
+              estado = 'VENCIDO';
+            } catch (err) {
+              console.error('Error al actualizar estado a vencido:', err);
+            }
+          }
 
-        // Verificar si está vencido
-        let estado = loan.state;
-        if (estado === 'PRESTADO' && hoy > fechaLimite) {
-          estado = 'VENCIDO';
-          // Actualizar en el backend silenciosamente
-          apiService.loans.updateState(loan.id, 'VENCIDO')
-            .catch(err => console.error('Error al actualizar estado a vencido:', err));
-        }
-
-        return {
-          id: loan.id,
-          titulo: loan.book.title,
-          estudiante: loan.student.fullName,
-          fechaPrestamo: loan.startDate,
-          fechaDevolucion: loan.returnDate,
-          estado: estado,
-          estadoMostrado: estadosTexto[estado] || estado
-        };
-      });
-
+          return {
+            id: loan.id,
+            titulo: loan.book.title,
+            estudiante: loan.student.fullName,
+            carnet: loan.student.carnet,
+            fechaPrestamo: loan.startDate,
+            fechaDevolucion: loan.returnDate,
+            estado: estado,
+            estadoMostrado: estadosTexto[estado] || estado
+          };
+        }));
+      
       setLibros(librosFormateados);
       setTotalItems(response.page.totalElements || 0);
 
@@ -90,46 +97,47 @@ export default function LibrosActivos() {
     }
   };
 
+  // Efecto para actualizar los estados de los préstamos cada minuto
+  useEffect(() => {
+    const interval = setInterval(fetchLibros, 60000); // Actualizar cada minuto
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     fetchLibros();
-  }, [currentPage, pageSize, filtroEstado]);
+  }, [currentPage, pageSize, filtroEstado, searchTerm]);
 
   const handleCambiarEstado = (libro) => {
     if (libro.estado === 'ENTREGADO') return;
     setSelectedLibro(libro);
     setShowConfirmDialog(true);
-  };
-
-  const handleConfirmarCambio = async () => {
-    if (!selectedLibro) return;
-
+  };  const handleConfirmarCambio = async () => {
+    setIsUpdating(true);
+    setError(null); // Clear any previous errors
     try {
-      setIsUpdating(true);
-      setError(null);
+      console.log('Attempting to update loan state for ID:', selectedLibro.id);
+      const result = await apiService.loans.updateState(selectedLibro.id, 'ENTREGADO');
+      console.log('Update successful, API response:', result);
       
-      await apiService.loans.updateState(selectedLibro.id, 'ENTREGADO');
-      
-      // Actualizar la lista localmente primero
-      setLibros(prevLibros => 
-        prevLibros.map(libro => 
-          libro.id === selectedLibro.id
-            ? {
-                ...libro,
-                estado: 'ENTREGADO',
-                estadoMostrado: estadosTexto['ENTREGADO']
-              }
-            : libro
-        )
-      );
-      
-      // Recargar la lista para asegurar sincronización
-      await fetchLibros();
-      
-      setShowConfirmDialog(false);
-      setSelectedLibro(null);
+      if (result) {
+        // Update the local state only if the API call was successful
+        setLibros(prevLibros => prevLibros.filter(libro => libro.id !== selectedLibro.id));
+        setShowConfirmDialog(false);
+        setSelectedLibro(null);
+        setSuccessMessage('¡Libro marcado como entregado exitosamente!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+        
+        // Refresh the list to ensure we have the latest data
+        fetchLibros();
+      } else {
+        throw new Error('No se recibió respuesta del servidor');
+      }
     } catch (error) {
-      console.error('Error al cambiar el estado:', error);
-      setError('Error al cambiar el estado: ' + (error.message || 'Por favor, intente de nuevo.'));
+      console.error('Error updating loan state:', error);
+      const errorMessage = error.message || 'Error al actualizar el estado del libro. Por favor, intente nuevamente.';
+      setError(errorMessage);
+      // Keep the dialog open on error
+      setShowConfirmDialog(true);
     } finally {
       setIsUpdating(false);
     }
@@ -140,9 +148,29 @@ export default function LibrosActivos() {
     setSelectedLibro(null);
   };
 
-  const handleExportar = () => {
-    // TODO: Implementar exportación
-    console.log('Exportando datos...');
+  const handleExportar = async () => {
+    try {
+      const pdfBlob = await apiService.loans.generateReport();
+      
+      // Crear una URL para el blob
+      const url = window.URL.createObjectURL(pdfBlob);
+      
+      // Crear un elemento <a> temporal
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `reporte-prestamos-${new Date().toLocaleDateString()}.pdf`;
+      
+      // Añadir al DOM y hacer clic
+      document.body.appendChild(link);
+      link.click();
+      
+      // Limpiar
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error al exportar:', error);
+      setError('Error al generar el reporte: ' + (error.message || 'Por favor, intente de nuevo.'));
+    }
   };
 
   const handleVerLibro = (libro) => {
@@ -154,12 +182,11 @@ export default function LibrosActivos() {
   return (
     <div className="prestamo-container">
       <Sidebar />
-      
       <div className="main-content">
         <Header />
-        
         <div className="libros-activos-container">
           <h2 className="section-title">Libros Activos</h2>
+          <p className="section-description">Aquí se muestran los préstamos pendientes y atrasados</p>
           
           <div className="panel-container">
             <div className="filtros-container">
@@ -176,11 +203,25 @@ export default function LibrosActivos() {
                   <option value="TODOS">Todos</option>
                   <option value="PRESTADO">Pendientes</option>
                   <option value="VENCIDO">Atrasados</option>
-                  <option value="ENTREGADO">Entregados</option>
                 </select>
+
+                <input
+                  type="text"
+                  placeholder="Buscar por título o estudiante..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(0);
+                  }}
+                  className="search-input"
+                />
                 
-                <button className="btn-exportar" onClick={handleExportar}>
-                  Exportar
+                <button 
+                  className="btn-exportar" 
+                  onClick={handleExportar}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Exportando...' : 'Exportar'}
                 </button>
               </div>
             </div>
@@ -188,6 +229,12 @@ export default function LibrosActivos() {
             {error && (
               <div className="error-message">
                 {error}
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+                {successMessage}
               </div>
             )}
 
@@ -221,60 +268,68 @@ export default function LibrosActivos() {
               </div>
             )}
 
-            <div className="table-container">
-              <table className="tabla-libros">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Título</th>
-                    <th>Estudiante</th>
-                    <th>Fecha Préstamo</th>
-                    <th>Fecha Devolución</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {libros.map((libro) => (
-                    <tr key={libro.id} className={libro.estado.toLowerCase()}>
-                      <td>{libro.id}</td>
-                      <td>{libro.titulo}</td>
-                      <td>{libro.estudiante}</td>
-                      <td>{libro.fechaPrestamo}</td>
-                      <td>{libro.fechaDevolucion}</td>
-                      <td>
-                        <div className="estado-container">
-                          <button
-                            className={`estado-button ${libro.estado.toLowerCase()}`}
-                            onClick={() => handleCambiarEstado(libro)}
-                            disabled={libro.estado === 'ENTREGADO' || isUpdating}
-                          >
-                            {libro.estadoMostrado}
-                          </button>
-                        </div>
-                      </td>
-                      <td className="col-acciones">
-                        <button 
-                          className="btn-ver"
-                          onClick={() => handleVerLibro(libro)}
-                        >
-                          Ver
-                        </button>
-                      </td>
+            {libros.length > 0 ? (
+              <div className="table-container">
+                <table className="tabla-libros">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Título</th>
+                      <th>Estudiante</th>
+                      <th>Carnet</th>
+                      <th>Fecha Préstamo</th>
+                      <th>Fecha Devolución</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {libros.map((libro) => (
+                      <tr key={libro.id} className={libro.estado.toLowerCase()}>
+                        <td>{libro.id}</td>
+                        <td>{libro.titulo}</td>
+                        <td>{libro.estudiante}</td>
+                        <td>{libro.carnet}</td>
+                        <td>{libro.fechaPrestamo}</td>
+                        <td>{libro.fechaDevolucion}</td>
+                        <td>
+                          <div className="estado-container">
+                            <button
+                              className={`estado-button ${libro.estado.toLowerCase()}`}
+                              onClick={() => handleCambiarEstado(libro)}
+                              disabled={libro.estado === 'ENTREGADO' || isUpdating}
+                            >
+                              {libro.estadoMostrado}
+                            </button>
+                          </div>
+                        </td>
+                        <td className="col-acciones">
+                          <button 
+                            className="btn-ver"
+                            onClick={() => handleVerLibro(libro)}
+                          >
+                            Ver
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-center mt-4">No hay libros activos que mostrar.</p>
+            )}
             
-            <Pagination
-              currentPage={currentPage + 1}
-              totalPages={Math.ceil(totalItems / pageSize)}
-              onPageChange={(page) => setCurrentPage(page - 1)}
-              pageSize={pageSize}
-              onPageSizeChange={setPageSize}
-              totalItems={totalItems}
-            />
+            {libros.length > 0 && (
+              <Pagination
+                currentPage={currentPage + 1}
+                totalPages={Math.ceil(totalItems / pageSize)}
+                onPageChange={(page) => setCurrentPage(page - 1)}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+                totalItems={totalItems}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -368,17 +423,12 @@ export default function LibrosActivos() {
         }
 
         .estado-button.prestado {
-          background-color: #ffd700;
-          color: #000;
+          background-color: #4CAF50;
+          color: white;
         }
 
         .estado-button.vencido {
           background-color: #ff6b6b;
-          color: white;
-        }
-
-        .estado-button.entregado {
-          background-color: #4CAF50;
           color: white;
         }
 
@@ -397,16 +447,62 @@ export default function LibrosActivos() {
           border: 1px solid #fecaca;
         }
 
+        .success-message {
+          background-color: #e1f5fe;
+          color: #01579b;
+          padding: 1rem;
+          border-radius: 6px;
+          margin-bottom: 1rem;
+          font-size: 0.95rem;
+          border: 1px solid #b3e5fc;
+        }
+
         tr.prestado {
-          background-color: #fff9e6;
+          background-color: #e8f5e9;
         }
 
         tr.vencido {
           background-color: #fff5f5;
         }
 
-        tr.entregado {
-          background-color: #f0fff4;
+        .section-description {
+          color: #666;
+          font-size: 0.9rem;
+          margin-bottom: 20px;
+          margin-top: -10px;
+        }
+
+        .search-input {
+          padding: 8px 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          margin: 0 10px;
+          width: 250px;
+        }
+
+        .search-input:focus {
+          outline: none;
+          border-color: #007bff;
+          box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+        .btn-exportar {
+          background-color: #28a745;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .btn-exportar:hover:not(:disabled) {
+          background-color: #218838;
+        }
+
+        .btn-exportar:disabled {
+          background-color: #6c757d;
+          cursor: not-allowed;
         }
       `}</style>
     </div>
