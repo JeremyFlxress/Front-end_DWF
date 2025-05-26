@@ -16,7 +16,9 @@ export default function PrestamoForm() {
   const [students, setStudents] = useState([]);
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingLoan, setIsCheckingLoan] = useState(false);
   const [error, setError] = useState(null);
+  const [activeLoanWarning, setActiveLoanWarning] = useState(null);
 
   // Format date functions
   const formatDateForInput = (dateStr) => {
@@ -79,8 +81,46 @@ export default function PrestamoForm() {
     returnDate: initialReturnDate
   });
 
+  // Función para verificar préstamos activos
+  const checkStudentActiveLoans = async (carnet) => {
+    if (!carnet) {
+      setActiveLoanWarning(null);
+      return;
+    }
+
+    setIsCheckingLoan(true);
+    try {
+      const result = await apiService.loans.checkActiveLoans(carnet);
+      if (result.hasActiveLoans) {
+        setActiveLoanWarning(
+          `Este estudiante ya tiene un préstamo activo del libro "${result.loanDetails.bookTitle}" ` +
+          `con fecha de devolución ${result.loanDetails.returnDate}. ` +
+          `Debe devolver este libro antes de poder realizar un nuevo préstamo.`
+        );
+        // Limpiar la selección del estudiante si tiene préstamo activo
+        setFormData(prev => ({
+          ...prev,
+          carnet: ''
+        }));
+      } else {
+        setActiveLoanWarning(null);
+      }
+    } catch (error) {
+      console.error('Error al verificar préstamos activos:', error);
+      setActiveLoanWarning('Error al verificar préstamos activos del estudiante');
+      // Limpiar la selección del estudiante en caso de error
+      setFormData(prev => ({
+        ...prev,
+        carnet: ''
+      }));
+    } finally {
+      setIsCheckingLoan(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {      try {
+    const fetchData = async () => {
+      try {
         // Verificar token
         const token = localStorage.getItem('token');
         if (!token) {
@@ -96,7 +136,9 @@ export default function PrestamoForm() {
         const [booksResponse, studentsResponse] = await Promise.all([
           apiService.books.getAll({ page: 0, size: 100 }),
           apiService.students.getAll({ page: 0, size: 100 })
-        ]);// Verificar que tenemos datos en las respuestas
+        ]);
+
+        // Verificar que tenemos datos en las respuestas
         const booksData = booksResponse._embedded?.books || [];
         const studentsData = studentsResponse._embedded?.students || [];
 
@@ -118,12 +160,10 @@ export default function PrestamoForm() {
           label: `${student.fullName} (${student.carnet})`
         }));
 
-        console.log('Books options:', booksOptions);
-        console.log('Students options:', studentsOptions);
-
         setBooks(booksOptions);
         setStudents(studentsOptions);
-        setIsLoading(false);      } catch (error) {
+        setIsLoading(false);
+      } catch (error) {
         console.error('Error cargando datos:', error);
         if (error.response?.status === 401) {
           router.push('/login');
@@ -168,6 +208,16 @@ export default function PrestamoForm() {
     setError(null);
     
     try {
+      // Verificar si hay préstamos activos antes de continuar
+      const activeLoansCheck = await apiService.loans.checkActiveLoans(formData.carnet);
+      if (activeLoansCheck.hasActiveLoans) {
+        throw new Error(
+          `Este estudiante ya tiene un préstamo activo del libro "${activeLoansCheck.loanDetails.bookTitle}" ` +
+          `con fecha de devolución ${activeLoansCheck.loanDetails.returnDate}. ` +
+          `Debe devolver este libro antes de poder realizar un nuevo préstamo.`
+        );
+      }
+
       // 1. Validaciones básicas
       if (!formData.carnet || !formData.idBook || !formData.returnDate) {
         throw new Error('Por favor complete todos los campos');
@@ -252,29 +302,69 @@ export default function PrestamoForm() {
           <div className="form-container">
             <form onSubmit={handleSubmit} className="prestamo-form">
               {error && <div className="error-message">{error}</div>}
+              {activeLoanWarning && (
+                <div className="warning-message" style={{
+                  backgroundColor: '#fff3cd',
+                  color: '#856404',
+                  padding: '12px',
+                  marginBottom: '1rem',
+                  borderRadius: '4px',
+                  border: '1px solid #ffeeba'
+                }}>
+                  ⚠️ {activeLoanWarning}
+                </div>
+              )}
               
               <div className="form-group">
                 <label htmlFor="carnet">Estudiante:</label>
-                <Select
-                  id="carnet"
-                  name="carnet"
-                  value={students.find(option => option.value === formData.carnet)}
-                  onChange={(selectedOption) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      carnet: selectedOption?.value || ''
-                    }));
-                  }}
-                  options={students}
-                  placeholder="Buscar estudiante por nombre o carnet..."
-                  isClearable
-                  isSearchable
-                  className="react-select-container"
-                  classNamePrefix="react-select"
-                  styles={customStyles}
-                  noOptionsMessage={({inputValue}) => 
-                    inputValue ? "No se encontraron estudiantes" : "Escriba para buscar..."}
-                />
+                <div className="student-search-container">
+                  <div className="select-container">
+                    <Select
+                      id="carnet"
+                      name="carnet"
+                      value={students.find(option => option.value === formData.carnet)}
+                      onChange={async (selectedOption) => {
+                        const carnet = selectedOption?.value || '';
+                        // Primero verificar préstamos activos
+                        await checkStudentActiveLoans(carnet);
+                        // Solo actualizar el carnet si no hay préstamos activos
+                        if (!activeLoanWarning) {
+                          setFormData(prev => ({
+                            ...prev,
+                            carnet: carnet
+                          }));
+                        }
+                      }}
+                      options={students}
+                      placeholder="Buscar estudiante por nombre o carnet..."
+                      isClearable
+                      isSearchable
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                      styles={customStyles}
+                      isDisabled={isCheckingLoan}
+                      noOptionsMessage={({inputValue}) => 
+                        inputValue ? "No se encontraron estudiantes" : "Escriba para buscar..."}
+                    />
+                  </div>
+                  <button 
+                    type="button"
+                    className="new-student-button"
+                    onClick={() => router.push('/nuevo-estudiante')}
+                    disabled={isCheckingLoan}
+                  >
+                    Crear Nuevo Estudiante
+                  </button>
+                </div>
+                {isCheckingLoan && (
+                  <div style={{ 
+                    color: '#666', 
+                    fontSize: '0.9em', 
+                    marginTop: '5px' 
+                  }}>
+                    Verificando préstamos activos...
+                  </div>
+                )}
               </div>
 
               <div className="form-group">
@@ -296,10 +386,13 @@ export default function PrestamoForm() {
                   className="react-select-container"
                   classNamePrefix="react-select"
                   styles={customStyles}
+                  isDisabled={isCheckingLoan || activeLoanWarning}
                   noOptionsMessage={({inputValue}) => 
                     inputValue ? "No se encontraron libros" : "Escriba para buscar..."}
                 />
-              </div>              <div className="form-group">
+              </div>
+
+              <div className="form-group">
                 <label htmlFor="returnDate">Fecha de Devolución:</label>
                 <input
                   type="date"
@@ -324,11 +417,16 @@ export default function PrestamoForm() {
                   }}
                   min={new Date().toISOString().split('T')[0]}
                   required
+                  disabled={isCheckingLoan || activeLoanWarning}
                 />
               </div>
 
               <div className="form-actions">
-                <button type="submit" className="submit-button">
+                <button 
+                  type="submit" 
+                  className="submit-button"
+                  disabled={isCheckingLoan || activeLoanWarning}
+                >
                   Registrar Préstamo
                 </button>
               </div>

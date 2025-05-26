@@ -6,9 +6,8 @@ body, html {
 
 .prestamo-container {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   background-color: #f5f5f5;
-  overflow: hidden;
 }
 
 /* Contenido principal */
@@ -21,28 +20,27 @@ body, html {
 
 /* Contenido específico del préstamo */
 .prestamo-content {
-  padding: 15px 20px;
   flex: 1;
-  overflow-y: auto;
-  height: calc(100vh - 60px); /* Ajusta según la altura de tu header */
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 2rem;
 }
 
 /* Título de la sección */
 .section-title {
-  color: #0f4c81;
-  font-size: 1.3rem;
-  margin-bottom: 15px;
-  font-weight: 500;
+  color: #2c3e50;
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
 }
 
 /* Contenedor del formulario */
 .form-container {
   background-color: white;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 15px;
-  max-width: 100%;
-  overflow-y: visible;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
 }
 
 /* Título del formulario */
@@ -55,27 +53,34 @@ body, html {
 
 /* Grupo de campos del formulario */
 .form-group {
-  margin-bottom: 12px;
-  width: 83%;
+  margin-bottom: 1.5rem;
+  width: 100%;
 }
 
 /* Etiquetas de los campos */
 .form-group label {
   display: block;
-  margin-bottom: 4px;
-  font-weight: normal;
-  color: #333;
-  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 0.95rem;
 }
 
 /* Campos de entrada */
 .form-control {
-  width: 98%;
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  font-size: 0.9rem;
-  height: 25px;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  background-color: white;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 1px #4299e1;
 }
 
 /* Contenedor para fechas */
@@ -160,18 +165,30 @@ body, html {
 
 /* Botón de envío del formulario */
 .submit-button {
-  padding: 8px 15px;
-  background-color: #4c7cff;
+  padding: 0.75rem 1.5rem;
+  background-color: #4299e1;
   color: white;
   border: none;
-  border-radius: 3px;
+  border-radius: 6px;
+  font-weight: 500;
   cursor: pointer;
-  font-weight: normal;
-  font-size: 0.9rem;
+  transition: all 0.2s;
+  font-size: 0.95rem;
 }
 
 .submit-button:hover {
-  background-color: #3a67e5;
+  background-color: #3182ce;
+  transform: translateY(-1px);
+}
+
+.submit-button:active {
+  transform: translateY(0);
+}
+
+.submit-button:disabled {
+  background-color: #cbd5e0;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Botón de cancelar */
@@ -192,35 +209,43 @@ body, html {
 
 /* Estilos específicos para inputs de fecha */
 .date-input {
-  width: 62.3% !important;
-  padding: 8px 12px;
-  border: 1px solid #e0e0e0;
+  width: 100% !important;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-size: 14px;
-  height: 38px;
-  background-color: #F9F9F9;
-  transition: all 0.2s ease-in-out;
-  cursor: pointer;
+  font-size: 0.95rem;
+  background-color: white;
+  transition: all 0.2s;
+  height: 42px;
 }
 
 .date-input::-webkit-calendar-picker-indicator {
   cursor: pointer;
-  padding: 4px;
-  filter: invert(0.6);
+  padding: 8px;
+  margin-right: 4px;
+  opacity: 0.6;
 }
 
 .date-input:hover {
-  border-color: #4285f4;
+  border-color: #cbd5e0;
 }
 
 .date-input:focus {
   outline: none;
-  border-color: #4285f4;
-  box-shadow: 0 0 0 1px rgba(66, 133, 244, 0.1);
+  border-color: #4299e1;
+  box-shadow: 0 0 0 1px #4299e1;
 }
 
 /* Estilos para dispositivos móviles */
 @media (max-width: 768px) {
+  .prestamo-content {
+    padding: 1rem;
+  }
+
+  .form-container {
+    padding: 1.5rem;
+  }
+
   .form-dates {
     flex-direction: column;
     gap: 12px;
@@ -237,17 +262,119 @@ body, html {
   .submit-button, .cancel-button {
     width: 100%;
   }
+
+  .student-search-container {
+    flex-direction: column;
+  }
+
+  .new-student-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
 }
+
 .form-group .search-container .form-control {
   width: 50% !important;
   flex: none !important;
 }
-
-
 
 /* Para los campos de fecha - más específico */
 .form-dates .date-group input {
   width: 62.3% !important;
   background-color: #F9F9F9;
   height: 25px;
+}
+
+.student-search-container {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.select-container {
+  flex: 1;
+  min-width: 0; /* Previene que el select se desborde */
+}
+
+/* Estilos para React Select */
+.react-select-container {
+  width: 100%;
+}
+
+.react-select__control {
+  border-color: #e2e8f0 !important;
+  border-radius: 6px !important;
+  min-height: 42px !important;
+}
+
+.react-select__control:hover {
+  border-color: #cbd5e0 !important;
+}
+
+.react-select__control--is-focused {
+  border-color: #4299e1 !important;
+  box-shadow: 0 0 0 1px #4299e1 !important;
+}
+
+.new-student-button {
+  padding: 0 1.5rem;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.new-student-button:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+}
+
+.new-student-button:active {
+  transform: translateY(0);
+}
+
+.new-student-button:disabled {
+  background-color: #cbd5e0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  border: 1px solid #fecaca;
+}
+
+.warning-message {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  border: 1px solid #ffeeba;
 }

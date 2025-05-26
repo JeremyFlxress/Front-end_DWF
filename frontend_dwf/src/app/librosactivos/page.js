@@ -18,21 +18,13 @@ export default function LibrosActivos() {
   const [error, setError] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedLibro, setSelectedLibro] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Mapeo de estados a texto para mostrar
   const estadosTexto = {
     'PRESTADO': 'Pendiente',
     'VENCIDO': 'Atrasado',
     'ENTREGADO': 'Entregado'
-  };
-
-  // Función para determinar el siguiente estado
-  const obtenerSiguienteEstado = (estadoActual) => {
-    // Solo permitir cambiar a ENTREGADO
-    if (estadoActual === 'PRESTADO' || estadoActual === 'VENCIDO') {
-      return 'ENTREGADO';
-    }
-    return estadoActual;
   };
 
   const fetchLibros = async () => {
@@ -44,91 +36,48 @@ export default function LibrosActivos() {
       }
 
       setIsLoading(true);
-      setError(null);      let params = {
+      setError(null);
+      
+      let params = {
         page: currentPage,
         size: pageSize
       };
 
       // Si no es TODOS, filtrar por estado específico
       if (filtroEstado !== 'TODOS') {
-        params.state = [filtroEstado];
-      }      const response = await apiService.loans.getAll(params);
-      const loansData = response._embedded?.bookLoans || [];
-      
-      // Procesar los préstamos y actualizar estados automáticamente
-      let librosFormateados = loansData
-        .filter(loan => loan.state !== 'ENTREGADO') // Excluir libros entregados
-        .map(loan => {
-          const fechaDevolucion = loan.returnDate;
-          const [dia, mes, anio] = fechaDevolucion.split('-').map(Number);
-          const fechaLimite = new Date(anio, mes - 1, dia);
-          const hoy = new Date();
-          hoy.setHours(0, 0, 0, 0);
-
-          // Actualizar automáticamente a vencido si corresponde
-          let estado = loan.state;
-          if (estado === 'PRESTADO' && hoy > fechaLimite) {
-            estado = 'VENCIDO';
-            // Actualizar en el backend
-            apiService.loans.updateState(loan.id, 'VENCIDO')
-              .catch(err => console.error('Error al actualizar estado a vencido:', err));
-          }
-
-          return {
-            id: loan.id,
-            titulo: loan.book.title,
-            estudiante: loan.student.fullName,
-            fechaPrestamo: loan.startDate,
-            fechaDevolucion: loan.returnDate,
-            estado: estado,
-            estadoMostrado: estadosTexto[estado] || estado          };
-      });
-
-      // Si no hay suficientes elementos para llenar la página, ajustar el tamaño de página
-      if (librosFormateados.length < pageSize) {
-        const updatedParams = {
-          ...params,
-          size: pageSize * 2 // Solicitar más elementos para compensar los filtrados
-        };
-        
-        // Hacer otra solicitud para obtener más elementos
-        const additionalResponse = await apiService.loans.getAll(updatedParams);
-        const additionalLoansData = additionalResponse._embedded?.bookLoans || [];
-        
-        const additionalFormattedBooks = additionalLoansData
-          .filter(loan => loan.state !== 'ENTREGADO')
-          .map(loan => {
-            const fechaDevolucion = loan.returnDate;
-            const [dia, mes, anio] = fechaDevolucion.split('-').map(Number);
-            const fechaLimite = new Date(anio, mes - 1, dia);
-            const hoy = new Date();
-            hoy.setHours(0, 0, 0, 0);
-
-            let estado = loan.state;
-            if (estado === 'PRESTADO' && hoy > fechaLimite) {
-              estado = 'VENCIDO';
-              apiService.loans.updateState(loan.id, 'VENCIDO')
-                .catch(err => console.error('Error al actualizar estado a vencido:', err));
-            }
-
-            return {
-              id: loan.id,
-              titulo: loan.book.title,
-              estudiante: loan.student.fullName,
-              fechaPrestamo: loan.startDate,
-              fechaDevolucion: loan.returnDate,
-              estado: estado,
-              estadoMostrado: estadosTexto[estado] || estado
-            };
-          });
-        
-        // Combinar los resultados y tomar solo los primeros pageSize elementos
-        librosFormateados = [...new Set([...librosFormateados, ...additionalFormattedBooks])]
-          .slice(0, pageSize);
+        params.state = filtroEstado;
       }
 
-      // Asegurar que nunca se muestren más elementos que el pageSize
-      librosFormateados = librosFormateados.slice(0, pageSize);
+      const response = await apiService.loans.getAll(params);
+      const loansData = response._embedded?.bookLoans || [];
+      
+      // Procesar los préstamos
+      const librosFormateados = loansData.map(loan => {
+        const fechaDevolucion = loan.returnDate;
+        const [dia, mes, anio] = fechaDevolucion.split('-').map(Number);
+        const fechaLimite = new Date(anio, mes - 1, dia);
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        // Verificar si está vencido
+        let estado = loan.state;
+        if (estado === 'PRESTADO' && hoy > fechaLimite) {
+          estado = 'VENCIDO';
+          // Actualizar en el backend silenciosamente
+          apiService.loans.updateState(loan.id, 'VENCIDO')
+            .catch(err => console.error('Error al actualizar estado a vencido:', err));
+        }
+
+        return {
+          id: loan.id,
+          titulo: loan.book.title,
+          estudiante: loan.student.fullName,
+          fechaPrestamo: loan.startDate,
+          fechaDevolucion: loan.returnDate,
+          estado: estado,
+          estadoMostrado: estadosTexto[estado] || estado
+        };
+      });
 
       setLibros(librosFormateados);
       setTotalItems(response.page.totalElements || 0);
@@ -143,10 +92,10 @@ export default function LibrosActivos() {
 
   useEffect(() => {
     fetchLibros();
-  }, [router, currentPage, pageSize, filtroEstado]);
+  }, [currentPage, pageSize, filtroEstado]);
 
-  const handleCambiarEstado = async (libro) => {
-    // Mostrar diálogo de confirmación
+  const handleCambiarEstado = (libro) => {
+    if (libro.estado === 'ENTREGADO') return;
     setSelectedLibro(libro);
     setShowConfirmDialog(true);
   };
@@ -155,26 +104,34 @@ export default function LibrosActivos() {
     if (!selectedLibro) return;
 
     try {
-      setIsLoading(true);
+      setIsUpdating(true);
       setError(null);
       
-      const nuevoEstado = 'ENTREGADO';
+      await apiService.loans.updateState(selectedLibro.id, 'ENTREGADO');
       
-      // Primera confirmación ya realizada (al hacer clic en el botón)
-      // Segunda confirmación a través del diálogo modal
-      await apiService.loans.updateState(selectedLibro.id, nuevoEstado);
+      // Actualizar la lista localmente primero
+      setLibros(prevLibros => 
+        prevLibros.map(libro => 
+          libro.id === selectedLibro.id
+            ? {
+                ...libro,
+                estado: 'ENTREGADO',
+                estadoMostrado: estadosTexto['ENTREGADO']
+              }
+            : libro
+        )
+      );
       
-      // Recargar la lista después de una actualización exitosa
+      // Recargar la lista para asegurar sincronización
       await fetchLibros();
       
-      // Limpiar el estado del diálogo
       setShowConfirmDialog(false);
       setSelectedLibro(null);
     } catch (error) {
       console.error('Error al cambiar el estado:', error);
       setError('Error al cambiar el estado: ' + (error.message || 'Por favor, intente de nuevo.'));
     } finally {
-      setIsLoading(false);
+      setIsUpdating(false);
     }
   };
 
@@ -192,7 +149,7 @@ export default function LibrosActivos() {
     router.push(`/detalles?id=${libro.id}&estado=${libro.estado}`);
   };
 
-  if (isLoading) return <div>Cargando...</div>;
+  if (isLoading && !libros.length) return <div>Cargando...</div>;
   
   return (
     <div className="prestamo-container">
@@ -215,9 +172,11 @@ export default function LibrosActivos() {
                     setFiltroEstado(e.target.value);
                     setCurrentPage(0);
                   }}
-                >                  <option value="TODOS">Todos</option>
+                >
+                  <option value="TODOS">Todos</option>
                   <option value="PRESTADO">Pendientes</option>
                   <option value="VENCIDO">Atrasados</option>
+                  <option value="ENTREGADO">Entregados</option>
                 </select>
                 
                 <button className="btn-exportar" onClick={handleExportar}>
@@ -227,38 +186,40 @@ export default function LibrosActivos() {
             </div>
 
             {error && (
-              <div className="error-message" style={{ color: 'red', padding: '10px', margin: '10px 0' }}>
+              <div className="error-message">
                 {error}
               </div>
             )}
 
             {showConfirmDialog && selectedLibro && (
-            <div className="modal-overlay">
-              <div className="modal-content">
-                <h3>Confirmar entrega</h3>
-                <p>¿Está seguro que desea marcar como entregado el siguiente libro?</p>
-                <div className="libro-info">
-                  <p><strong>Título:</strong> {selectedLibro.titulo}</p>
-                  <p><strong>Estudiante:</strong> {selectedLibro.estudiante}</p>
-                  <p><strong>Estado actual:</strong> {selectedLibro.estadoMostrado}</p>
-                </div>
-                <div className="modal-buttons">
-                  <button 
-                    className="btn-confirmar"
-                    onClick={handleConfirmarCambio}
-                  >
-                    Sí, confirmar entrega
-                  </button>
-                  <button 
-                    className="btn-cancelar"
-                    onClick={handleCancelarCambio}
-                  >
-                    Cancelar
-                  </button>
+              <div className="modal-overlay">
+                <div className="modal-content">
+                  <h3>Confirmar entrega</h3>
+                  <p>¿Está seguro que desea marcar como entregado el siguiente libro?</p>
+                  <div className="libro-info">
+                    <p><strong>Título:</strong> {selectedLibro.titulo}</p>
+                    <p><strong>Estudiante:</strong> {selectedLibro.estudiante}</p>
+                    <p><strong>Estado actual:</strong> {selectedLibro.estadoMostrado}</p>
+                  </div>
+                  <div className="modal-buttons">
+                    <button 
+                      className="btn-confirmar"
+                      onClick={handleConfirmarCambio}
+                      disabled={isUpdating}
+                    >
+                      {isUpdating ? 'Confirmando...' : 'Sí, confirmar entrega'}
+                    </button>
+                    <button 
+                      className="btn-cancelar"
+                      onClick={handleCancelarCambio}
+                      disabled={isUpdating}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
             <div className="table-container">
               <table className="tabla-libros">
@@ -275,7 +236,7 @@ export default function LibrosActivos() {
                 </thead>
                 <tbody>
                   {libros.map((libro) => (
-                    <tr key={libro.id}>
+                    <tr key={libro.id} className={libro.estado.toLowerCase()}>
                       <td>{libro.id}</td>
                       <td>{libro.titulo}</td>
                       <td>{libro.estudiante}</td>
@@ -284,9 +245,9 @@ export default function LibrosActivos() {
                       <td>
                         <div className="estado-container">
                           <button
-                            className={`estado-button ${libro.estadoMostrado.toLowerCase()}`}
+                            className={`estado-button ${libro.estado.toLowerCase()}`}
                             onClick={() => handleCambiarEstado(libro)}
-                            disabled={libro.estado === 'ENTREGADO'}
+                            disabled={libro.estado === 'ENTREGADO' || isUpdating}
                           >
                             {libro.estadoMostrado}
                           </button>
@@ -365,10 +326,16 @@ export default function LibrosActivos() {
           border: none;
           border-radius: 4px;
           cursor: pointer;
+          transition: all 0.2s;
         }
 
-        .btn-confirmar:hover {
+        .btn-confirmar:hover:not(:disabled) {
           background: #45a049;
+        }
+
+        .btn-confirmar:disabled {
+          background: #cccccc;
+          cursor: not-allowed;
         }
 
         .btn-cancelar {
@@ -378,10 +345,16 @@ export default function LibrosActivos() {
           border: none;
           border-radius: 4px;
           cursor: pointer;
+          transition: all 0.2s;
         }
 
-        .btn-cancelar:hover {
+        .btn-cancelar:hover:not(:disabled) {
           background: #da190b;
+        }
+
+        .btn-cancelar:disabled {
+          background: #cccccc;
+          cursor: not-allowed;
         }
 
         .estado-button {
@@ -390,12 +363,50 @@ export default function LibrosActivos() {
           border-radius: 4px;
           cursor: pointer;
           font-weight: 500;
-          transition: background-color 0.2s;
+          transition: all 0.2s;
+          min-width: 100px;
+        }
+
+        .estado-button.prestado {
+          background-color: #ffd700;
+          color: #000;
+        }
+
+        .estado-button.vencido {
+          background-color: #ff6b6b;
+          color: white;
+        }
+
+        .estado-button.entregado {
+          background-color: #4CAF50;
+          color: white;
         }
 
         .estado-button:disabled {
           opacity: 0.6;
           cursor: not-allowed;
+        }
+
+        .error-message {
+          background-color: #fee2e2;
+          color: #dc2626;
+          padding: 1rem;
+          border-radius: 6px;
+          margin-bottom: 1rem;
+          font-size: 0.95rem;
+          border: 1px solid #fecaca;
+        }
+
+        tr.prestado {
+          background-color: #fff9e6;
+        }
+
+        tr.vencido {
+          background-color: #fff5f5;
+        }
+
+        tr.entregado {
+          background-color: #f0fff4;
         }
       `}</style>
     </div>

@@ -109,7 +109,7 @@ const loans = {
         try {
             console.log('Datos recibidos en create:', loanData);
 
-            // Validar que todos los campos requeridos estén presentes
+            // 1. Validar que todos los campos requeridos estén presentes
             if (!loanData.carnet?.trim()) {
                 throw new Error('El carnet del estudiante es requerido');
             }
@@ -120,14 +120,14 @@ const loans = {
                 throw new Error('La fecha de devolución es requerida');
             }
 
-            // Validar formato de fecha (debe ser dd-MM-yyyy)
+            // 2. Validar formato de fecha (debe ser dd-MM-yyyy)
             const dateRegex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$/;
             if (!dateRegex.test(loanData.returnDate)) {
                 console.error('Fecha inválida:', loanData.returnDate);
                 throw new Error('El formato de fecha debe ser dd-MM-yyyy');
             }
 
-            // Validar que la fecha sea válida y futura
+            // 3. Validar que la fecha sea válida y futura
             const [day, month, year] = loanData.returnDate.split('-').map(Number);
             const returnDate = new Date(year, month - 1, day);
             const today = new Date();
@@ -141,27 +141,45 @@ const loans = {
                 throw new Error('La fecha de devolución no puede ser anterior a hoy');
             }
 
-            // Preparar datos para el envío
+            // 4. Verificar disponibilidad del libro
+            const bookResponse = await axiosInstance.get(`/books/${loanData.idBook}`);
+            const book = bookResponse.data;
+
+            if (book.state !== 'DISPONIBLE') {
+                throw new Error(`El libro "${book.title}" no está disponible para préstamo`);
+            }
+
+            if (!book.stock || book.stock <= 0) {
+                throw new Error(`El libro "${book.title}" no tiene ejemplares disponibles`);
+            }
+
+            // 5. Preparar datos para el envío
             const cleanLoanData = {
                 carnet: String(loanData.carnet).trim(),
                 idBook: Number(loanData.idBook),
-                returnDate: loanData.returnDate // Mantener el formato dd-MM-yyyy
+                returnDate: loanData.returnDate,
+                state: 'PRESTADO'
             };
 
-            console.log('Datos a enviar al backend:', {
-                ...cleanLoanData,
-                types: {
-                    carnet: typeof cleanLoanData.carnet,
-                    idBook: typeof cleanLoanData.idBook,
-                    returnDate: typeof cleanLoanData.returnDate
+            console.log('Enviando al backend:', cleanLoanData);
+            
+            try {
+                const response = await axiosInstance.post(API_ROUTES.LOANS, cleanLoanData);
+                return response.data;
+            } catch (error) {
+                if (error.response?.data?.message?.includes('ya tiene un préstamo activo')) {
+                    throw new Error('El estudiante ya tiene un préstamo activo. No puede realizar otro préstamo hasta devolver el actual.');
                 }
-            });
-
-            const response = await axiosInstance.post(API_ROUTES.LOANS, cleanLoanData);
-            return response.data;
+                if (error.response?.status === 400) {
+                    const errorMessage = error.response?.data?.message || 'Error en los datos del préstamo';
+                    throw new Error(errorMessage);
+                }
+                throw error;
+            }
         } catch (error) {
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
+            console.error('Error completo:', error);
+            if (error.message) {
+                throw error;
             }
             handleError(error, 'creando préstamo');
         }
@@ -253,6 +271,43 @@ const loans = {
         } catch (error) {
             handleError(error, 'actualizando estado del préstamo');
         }
+    },
+
+    checkActiveLoans: async (carnet) => {
+        try {
+            if (!carnet) {
+                throw new Error('El carnet del estudiante es requerido');
+            }
+
+            const queryParams = new URLSearchParams({
+                carnet: carnet,
+                state: 'PRESTADO',
+                page: 0,
+                size: 1
+            }).toString();
+            
+            const response = await axiosInstance.get(`${API_ROUTES.LOANS}?${queryParams}`);
+            const hasActiveLoans = response.data?._embedded?.bookLoans?.length > 0;
+            
+            if (hasActiveLoans) {
+                const activeLoan = response.data._embedded.bookLoans[0];
+                return {
+                    hasActiveLoans: true,
+                    loanDetails: {
+                        bookTitle: activeLoan.book.title,
+                        returnDate: activeLoan.returnDate
+                    }
+                };
+            }
+            
+            return {
+                hasActiveLoans: false,
+                loanDetails: null
+            };
+        } catch (error) {
+            console.error('Error verificando préstamos activos:', error);
+            throw new Error('Error al verificar préstamos activos del estudiante');
+        }
     }
 };
 
@@ -270,13 +325,44 @@ const students = {
             handleError(error, 'obteniendo estudiantes');
         }
     },
-
-    getById: async (carnet) => {
+    create: async (studentData) => {
         try {
-            const response = await axiosInstance.get(API_ROUTES.STUDENT_BY_ID(carnet));
+            // Validaciones básicas
+            if (!studentData.carnet?.trim()) {
+                throw new Error('El carnet es requerido');
+            }
+            if (!studentData.fullName?.trim()) {
+                throw new Error('El nombre completo es requerido');
+            }
+            if (!studentData.email?.trim()) {
+                throw new Error('El correo electrónico es requerido');
+            }
+
+            // Validar formato de carnet
+            const carnetRegex = /^[A-Z]+[0-9]{2,}$/;
+            if (!carnetRegex.test(studentData.carnet)) {
+                throw new Error('El carnet debe comenzar con letras mayúsculas seguidas de números');
+            }
+
+            // Validar email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(studentData.email)) {
+                throw new Error('El correo electrónico no es válido');
+            }
+
+            const cleanStudentData = {
+                carnet: studentData.carnet.trim().toUpperCase(),
+                fullName: studentData.fullName.trim(),
+                email: studentData.email.trim().toLowerCase()
+            };
+
+            const response = await axiosInstance.post(API_ROUTES.STUDENTS, cleanStudentData);
             return response.data;
         } catch (error) {
-            handleError(error, 'obteniendo estudiante');
+            if (error.response?.status === 409) {
+                throw new Error('Ya existe un estudiante con este carnet');
+            }
+            handleError(error, 'creando estudiante');
         }
     }
 };
