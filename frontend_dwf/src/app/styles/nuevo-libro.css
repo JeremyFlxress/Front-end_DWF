@@ -87,119 +87,106 @@
   gap: 0.5rem;
 }
 
+/* Estilos para React Select */
+.select-container {
+  width: 100%;
+}
+
+.css-1s2u09g-control,
+.css-13cymwt-control {
+  min-height: 44px !important;
+  border-color: #ddd !important;
+  border-radius: 4px !important;
+}
+
+.css-13cymwt-control:hover {
+  border-color: #007bff !important;
+}
+
+.css-t3ipsp-control {
+  min-height: 44px !important;
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 1px #007bff !important;
+}
+
+.css-1p3m7a8-multiValue {
+  background-color: #e7f3ff !important;
+  border-radius: 3px !important;
+}
+
+.css-wsp0cs-MultiValueGeneric {
+  color: #007bff !important;
+  padding: 2px 8px !important;
+}
+
+/* Form Elements */
 .form-group label {
   font-weight: 500;
   color: #333;
+  margin-bottom: 4px;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+  width: 100%;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-.form-group input:focus {
+.form-group input:focus,
+.form-group select:focus {
   border-color: #007bff;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-/* Remove spinner buttons for number inputs */
-.form-group input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-.form-group input[type="number"]::-webkit-outer-spin-button,
-.form-group input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .required {
   color: #dc3545;
-  margin-left: 4px;
+  margin-left: 2px;
 }
 
-.error-message {
-  background-color: #ffeaea;
-  border: 1px solid #ffc7c7;
-  color: #dc3545;
-  padding: 1rem;
+/* Button styles */
+.btn-guardar {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
   border-radius: 4px;
-  margin-bottom: 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-guardar:hover {
+  background-color: #0056b3;
+}
+
+.btn-guardar:disabled {
+  background-color: #b3d7ff;
+  cursor: not-allowed;
 }
 
 .form-actions {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
-  margin-top: 1rem;
+  margin-top: 2rem;
 }
 
-.btn-submit {
-  background-color: #007bff;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
+/* Error message */
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
   border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
 }
 
-.btn-submit:hover {
-  background-color: #0056b3;
-}
-
-.btn-cancel {
-  background-color: #6c757d;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.btn-cancel:hover {
-  background-color: #5a6268;
-}
-
-/* React-Select custom styles */
-.react-select-container {
-  width: 100%;
-}
-
-.react-select__control {
-  min-height: 42px !important;
-}
-
-.react-select__control:hover {
-  border-color: #007bff !important;
-}
-
-.react-select__control--is-focused {
-  border-color: #007bff !important;
-  box-shadow: 0 0 0 1px #007bff !important;
-}
-
-.react-select__option--is-selected {
-  background-color: #007bff !important;
-}
-
-.react-select__option:hover {
-  background-color: #e9ecef !important;
-}
-
-.react-select__option--is-selected:hover {
-  background-color: #0056b3 !important;
-}
-
+/* Loading spinner */
 .loading {
   display: flex;
   justify-content: center;
@@ -207,6 +194,16 @@
   height: 200px;
   font-size: 1.2rem;
   color: #666;
+}
+
+/* Loading state */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  font-size: 1.1rem;
+  color: #6c757d;
 }
 
 /* Responsive styles */

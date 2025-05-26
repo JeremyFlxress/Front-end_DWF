@@ -41,8 +41,7 @@ const auth = {
 };
 
 const books = {    getAll: async (params = { page: 0, size: 10 }) => {
-        try {
-            const queryParams = new URLSearchParams();
+        try {            const queryParams = new URLSearchParams();
             
             // Add required pagination parameters
             queryParams.append('page', params.page);
@@ -56,6 +55,9 @@ const books = {    getAll: async (params = { page: 0, size: 10 }) => {
             if (params.idCategory) queryParams.append('idCategory', params.idCategory);
             if (params.idEditorial) queryParams.append('idEditorial', params.idEditorial);
             if (params.idAuthor) queryParams.append('idAuthor', params.idAuthor);
+            
+            // Explicitly request authors and category data
+            queryParams.append('projection', 'withAuthorsAndCategory');
             
             const response = await axiosInstance.get(`${API_ROUTES.BOOKS}?${queryParams}`);
             return response.data;

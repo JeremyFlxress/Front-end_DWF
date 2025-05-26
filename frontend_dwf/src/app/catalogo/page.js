@@ -20,6 +20,7 @@ export default function Catalogo() {
   const [error, setError] = useState(null);
   const [totalItems, setTotalItems] = useState(0);
   const [libros, setLibros] = useState([]);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Add debounce effect for search term
   useEffect(() => {
@@ -31,43 +32,43 @@ export default function Catalogo() {
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
+  const fetchBooks = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+      
+      const queryParams = {
+        page: currentPage,
+        size: pageSize,
+      };
+      
+      if (debouncedSearchTerm.trim()) {
+        queryParams.title = debouncedSearchTerm.trim();
+      }
+
+      const response = await apiService.books.getAll(queryParams);
+      const booksData = response._embedded?.books || [];
+      setLibros(booksData);
+      setTotalItems(response.page.totalElements || 0);
+    } catch (error) {
+      console.error('Error al cargar libros:', error);
+      setError('Error al cargar los libros. Por favor, intente de nuevo.');
+      if (error.response?.status === 401) {
+        router.push('/login');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Fetch books from backend
   useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          router.push('/login');
-          return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-        
-        const queryParams = {
-          page: currentPage,
-          size: pageSize,
-        };
-        
-        if (debouncedSearchTerm.trim()) {
-          queryParams.title = debouncedSearchTerm.trim();
-        }
-
-        const response = await apiService.books.getAll(queryParams);
-        const booksData = response._embedded?.books || [];
-        setLibros(booksData);
-        setTotalItems(response.page.totalElements || 0);
-      } catch (error) {
-        console.error('Error al cargar libros:', error);
-        setError('Error al cargar los libros. Por favor, intente de nuevo.');
-        if (error.response?.status === 401) {
-          router.push('/login');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchBooks();
   }, [router, currentPage, pageSize, debouncedSearchTerm]);
 
@@ -80,33 +81,51 @@ export default function Catalogo() {
   };
 
   const handleChangeStatus = (libro) => {
+    if (isUpdating) return;
     setSelectedBook(libro);
     setShowConfirmDialog(true);
   };
-
   const confirmStatusChange = async () => {
-    if (selectedBook) {
-      try {
-        setError(null);
-        
-        const updatedBook = {
-          ...selectedBook,
-          state: selectedBook.state === 'DISPONIBLE' ? 'NO_DISPONIBLE' : 'DISPONIBLE'
-        };
+    if (!selectedBook || isUpdating) return;
 
-        await apiService.books.update(selectedBook.id, updatedBook);
-        
-        setLibros(libros.map(libro => 
-          libro.id === selectedBook.id ? updatedBook : libro
-        ));
+    try {
+      setIsUpdating(true);
+      setError(null);
+      
+      const newState = selectedBook.state === 'DISPONIBLE' ? 'NO_DISPONIBLE' : 'DISPONIBLE';
+      
+      // Create update payload with all required fields
+      const updateData = {
+        title: selectedBook.title,
+        state: newState,
+        stock: selectedBook.stock || 0,
+        publishedDate: selectedBook.publishedDate || new Date().getFullYear(),
+        idCategory: selectedBook.category?.id,
+        idEditorial: selectedBook.editorial?.id,
+        idAuthors: selectedBook.authors?.map(author => author.id) || []
+      };
 
-        setShowConfirmDialog(false);
-        setSelectedBook(null);
-      } catch (error) {
-        console.error('Error al actualizar estado:', error);
-        setError('Error al actualizar el estado del libro. Por favor, intente de nuevo.');
-      }
+      await apiService.books.update(selectedBook.id, updateData);
+      
+      // Update the local state
+      setLibros(currentLibros => currentLibros.map(libro => 
+        libro.id === selectedBook.id ? { ...libro, state: newState } : libro
+      ));
+
+      setShowConfirmDialog(false);
+      setSelectedBook(null);
+    } catch (error) {
+      console.error('Error al actualizar estado:', error);
+      setError('Error al actualizar el estado del libro. Por favor, intente de nuevo.');
+    } finally {
+      setIsUpdating(false);
     }
+  };
+
+  const handleCloseDialog = () => {
+    if (isUpdating) return;
+    setShowConfirmDialog(false);
+    setSelectedBook(null);
   };
 
   return (
@@ -160,9 +179,19 @@ export default function Catalogo() {
                       <tr key={libro.id}>
                         <td>{libro.id}</td>
                         <td>{libro.title}</td>
-                        <td>{libro.authors?.map(author => author.name).join(', ')}</td>
+                        <td>
+                          {libro.authors?.length ? 
+                            libro.authors.map(author => author.nameAuthor || author.name).join(', ') 
+                            : 'No hay autores'
+                          }
+                        </td>
                         <td>{libro.stock}</td>
-                        <td>{libro.category?.name}</td>
+                        <td>
+                          {libro.category ? 
+                            (libro.category.nameCategory || libro.category.name) 
+                            : 'Sin categoría'
+                          }
+                        </td>
                         <td>
                           <span className={`estado-${libro.state.toLowerCase()}`}>
                             {libro.state === 'DISPONIBLE' ? 'Disponible' : 'No Disponible'}
@@ -177,9 +206,10 @@ export default function Catalogo() {
                             ✎
                           </button>
                           <button 
-                            className={`btn-toggle-status ${libro.state === 'DISPONIBLE' ? 'disponible' : 'no-disponible'}`}
+                            className={`btn-toggle-status ${libro.state.toLowerCase() === 'disponible' ? 'disponible' : 'no-disponible'}`}
                             onClick={() => handleChangeStatus(libro)}
                             title={`Cambiar a ${libro.state === 'DISPONIBLE' ? 'No Disponible' : 'Disponible'}`}
+                            disabled={isUpdating}
                           >
                             {libro.state === 'DISPONIBLE' ? '✓' : '×'}
                           </button>
@@ -210,7 +240,7 @@ export default function Catalogo() {
               </div>
               <div className="dialog-body">
                 <p>
-                  ¿Está seguro que quiere cambiar el estado del libro &quot;{selectedBook?.title}&quot; a 
+                  ¿Está seguro que quiere cambiar el estado del libro "{selectedBook?.title}" a 
                   {selectedBook?.state === 'DISPONIBLE' ? ' No Disponible' : ' Disponible'}?
                 </p>
               </div>
@@ -218,15 +248,14 @@ export default function Catalogo() {
                 <button 
                   className="btn-confirmar"
                   onClick={confirmStatusChange}
+                  disabled={isUpdating}
                 >
-                  Aceptar
+                  {isUpdating ? 'Actualizando...' : 'Aceptar'}
                 </button>
                 <button 
                   className="btn-cancelar"
-                  onClick={() => {
-                    setShowConfirmDialog(false);
-                    setSelectedBook(null);
-                  }}
+                  onClick={handleCloseDialog}
+                  disabled={isUpdating}
                 >
                   Cancelar
                 </button>

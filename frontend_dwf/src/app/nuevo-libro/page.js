@@ -27,6 +27,7 @@ export default function NuevoLibro() {
   const [editorials, setEditorials] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -39,18 +40,23 @@ export default function NuevoLibro() {
         }
 
         setIsLoading(true);
-        setError(null);
-
-        // Fetch categories, editorials and authors in parallel
+        setError(null);        // Fetch categories, editorials and authors in parallel
         const [categoriesRes, editorialsRes, authorsRes] = await Promise.all([
           apiService.categories.getAll(),
           apiService.editorials.getAll(),
           apiService.authors.getAll()
         ]);
 
-        setCategories(categoriesRes._embedded?.categories || []);
-        setEditorials(editorialsRes._embedded?.editorials || []);
-        setAuthors(authorsRes._embedded?.authors || []);
+        console.log('API Responses:', { categoriesRes, editorialsRes, authorsRes });
+
+        // Handle each response separately and map the data correctly
+        const categoryList = Array.isArray(categoriesRes) ? categoriesRes : (categoriesRes._embedded?.categories || []);
+        const editorialList = Array.isArray(editorialsRes) ? editorialsRes : (editorialsRes._embedded?.editorials || []);
+        const authorList = Array.isArray(authorsRes) ? authorsRes : (authorsRes._embedded?.authors || []);
+
+        setCategories(categoryList);
+        setEditorials(editorialList);
+        setAuthors(authorList);
 
       } catch (error) {
         console.error('Error cargando datos:', error);
@@ -65,15 +71,16 @@ export default function NuevoLibro() {
 
     fetchData();
   }, [router]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setIsSaving(true);
     
     try {
       // Validate required fields
       if (!formData.title || !formData.stock || !formData.publishedDate || !formData.idCategory || !formData.idEditorial || formData.idAuthors.length === 0) {
         setError('Por favor complete todos los campos obligatorios');
+        setIsSaving(false);
         return;
       }
 
@@ -98,10 +105,11 @@ export default function NuevoLibro() {
       alert('Libro creado exitosamente');
       router.push('/catalogo');
       
-    } catch (error) {
-      console.error('Error al crear libro:', error);
+    } catch (error) {      console.error('Error al crear libro:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Error al crear el libro. Por favor, intente de nuevo.';
       setError(errorMessage);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -177,12 +185,11 @@ export default function NuevoLibro() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="idCategory">Categoría: <span className="required">*</span></label>
-                <Select
+                <label htmlFor="idCategory">Categoría: <span className="required">*</span></label>                <Select
                   id="idCategory"
                   name="idCategory"
                   value={categories.find(cat => cat.id === formData.idCategory)
-                    ? { value: formData.idCategory, label: categories.find(cat => cat.id === formData.idCategory).name }
+                    ? { value: formData.idCategory, label: categories.find(cat => cat.id === formData.idCategory).nameCategory || categories.find(cat => cat.id === formData.idCategory).name }
                     : null}
                   onChange={(selected) => setFormData(prev => ({
                     ...prev,
@@ -190,20 +197,20 @@ export default function NuevoLibro() {
                   }))}
                   options={categories.map(cat => ({
                     value: cat.id,
-                    label: cat.name
+                    label: cat.nameCategory || cat.name
                   }))}
                   placeholder="Seleccione una categoría"
+                  className="select-container"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="idEditorial">Editorial: <span className="required">*</span></label>
-                <Select
+                <label htmlFor="idEditorial">Editorial: <span className="required">*</span></label>                <Select
                   id="idEditorial"
                   name="idEditorial"
                   value={editorials.find(ed => ed.id === formData.idEditorial)
-                    ? { value: formData.idEditorial, label: editorials.find(ed => ed.id === formData.idEditorial).name }
+                    ? { value: formData.idEditorial, label: editorials.find(ed => ed.id === formData.idEditorial).nameEditorial || editorials.find(ed => ed.id === formData.idEditorial).name }
                     : null}
                   onChange={(selected) => setFormData(prev => ({
                     ...prev,
@@ -211,22 +218,22 @@ export default function NuevoLibro() {
                   }))}
                   options={editorials.map(ed => ({
                     value: ed.id,
-                    label: ed.name
+                    label: ed.nameEditorial || ed.name
                   }))}
                   placeholder="Seleccione una editorial"
+                  className="select-container"
                   required
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="idAuthors">Autores: <span className="required">*</span></label>
-                <Select
+                <label htmlFor="idAuthors">Autores: <span className="required">*</span></label>                <Select
                   isMulti
                   id="idAuthors"
                   name="idAuthors"
                   value={formData.idAuthors.map(authorId => {
                     const author = authors.find(a => a.id === authorId);
-                    return author ? { value: author.id, label: author.name } : null;
+                    return author ? { value: author.id, label: author.nameAuthor || author.name } : null;
                   })}
                   onChange={(selected) => setFormData(prev => ({
                     ...prev,
@@ -234,21 +241,25 @@ export default function NuevoLibro() {
                   }))}
                   options={authors.map(author => ({
                     value: author.id,
-                    label: author.name
+                    label: author.nameAuthor || author.name
                   }))}
                   placeholder="Seleccione uno o más autores"
+                  className="select-container"
                   required
                 />
-              </div>
-
-              <div className="form-actions">
-                <button type="submit" className="btn-submit">
-                  Crear Libro
+              </div>              <div className="form-actions">
+                <button 
+                  type="submit" 
+                  className="btn-guardar" 
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Guardando...' : 'Crear Libro'}
                 </button>
                 <button 
                   type="button" 
                   className="btn-cancel"
                   onClick={() => router.push('/catalogo')}
+                  disabled={isSaving}
                 >
                   Cancelar
                 </button>

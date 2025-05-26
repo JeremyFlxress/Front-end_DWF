@@ -3,45 +3,69 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import '../styles/nuevo-libro.css'; // Reutilizamos los estilos del formulario
+import apiService from '@/config/apiService';
+import '../styles/nuevo-libro.css';
 
 export default function EditarLibro() {
   const router = useRouter();
-  const [libro, setLibro] = useState({
-    codigo: '',
-    titulo: '',
-    autor: '',
-    categoria: '',
-    cantidad: ''
-  });
+  const [libro, setLibro] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // En un caso real, aquí obtendríamos los datos del libro de la API
-  // Por ahora usamos datos de ejemplo
   useEffect(() => {
-    // Simulamos obtener los datos del libro
-    const libroData = {
-      codigo: 'AEP4001',
-      titulo: 'Alicia en el país de las maravillas',
-      autor: 'Autor 1',
-      categoria: 'Ciencia Ficcion',
-      cantidad: '15'
+    const fetchLibro = async () => {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const id = searchParams.get('id');
+        
+        if (!id) {
+          router.push('/catalogo');
+          return;
+        }
+
+        const response = await apiService.books.getById(id);
+        setLibro(response);
+      } catch (error) {
+        console.error('Error al cargar libro:', error);
+        setError('Error al cargar los datos del libro');
+        if (error.response?.status === 401) {
+          router.push('/login');
+        }
+      } finally {
+        setIsLoading(false);
+      }
     };
-    setLibro(libroData);
-  }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setLibro({
-      ...libro,
-      [name]: value
-    });
-  };
+    fetchLibro();
+  }, [router]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Datos actualizados:', libro);
-    // Aquí iría la llamada a la API para actualizar
-    router.push('/catalogo');
+    
+    try {
+      setIsSaving(true);
+      setError(null);
+
+      // Only update stock, but send all required fields
+      const updateData = {
+        title: libro.title,
+        stock: parseInt(libro.stock, 10),
+        publishedDate: libro.publishedDate,
+        state: libro.state,
+        idCategory: libro.category?.id,
+        idEditorial: libro.editorial?.id,
+        idAuthors: libro.authors?.map(author => author.id) || []
+      };
+
+      await apiService.books.update(libro.id, updateData);
+      router.push('/catalogo');
+    } catch (error) {
+      console.error('Error al actualizar libro:', error);
+      setError('Error al actualizar el libro. Por favor, intente de nuevo.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -51,93 +75,131 @@ export default function EditarLibro() {
   return (
     <div className="prestamo-container">
       <Sidebar />
-      
       <div className="main-content">
         <Header />
         
         <div className="nuevo-libro-container">
-          <h2 className="section-title">Registro de Libros</h2>
+          <h2 className="section-title">Editar Libro</h2>
           
           <div className="form-container">
-            <h3 className="form-subtitle">Formulario de Registro</h3>
+            {error && <div className="error-message">{error}</div>}
             
-            <form onSubmit={handleSubmit} className="nuevo-libro-form">
-              <div className="form-group">
-                <label htmlFor="codigo">Código</label>
-                <input
-                  type="text"
-                  id="codigo"
-                  name="codigo"
-                  value={libro.codigo}
-                  className="form-control"
-                  disabled
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="titulo">Título</label>
-                <input
-                  type="text"
-                  id="titulo"
-                  name="titulo"
-                  value={libro.titulo}
-                  className="form-control"
-                  disabled
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="autor">Autor</label>
-                <input
-                  type="text"
-                  id="autor"
-                  name="autor"
-                  value={libro.autor}
-                  className="form-control"
-                  disabled
-                />
-              </div>
-              
-              <div className="form-row">
-                <div className="form-group half">
-                  <label htmlFor="categoria">Categoría</label>
+            {isLoading ? (
+              <div className="loading">Cargando...</div>
+            ) : libro ? (
+              <form onSubmit={handleSubmit} className="nuevo-libro-form">
+                <div className="form-group">
+                  <label htmlFor="id">Código</label>
                   <input
                     type="text"
-                    id="categoria"
-                    name="categoria"
-                    value={libro.categoria}
+                    id="id"
+                    value={libro.id}
                     className="form-control"
                     disabled
                   />
                 </div>
                 
-                <div className="form-group half">
-                  <label htmlFor="cantidad">Cantidad</label>
+                <div className="form-group">
+                  <label htmlFor="title">Título</label>
                   <input
-                    type="number"
-                    id="cantidad"
-                    name="cantidad"
-                    value={libro.cantidad}
-                    onChange={handleChange}
-                    className="form-control-cant"
-                    min="0"
+                    type="text"
+                    id="title"
+                    value={libro.title}
+                    className="form-control"
+                    disabled
                   />
                 </div>
-              </div>
-              
-              <div className="form-buttons">
-                <button type="submit" className="btn-guardar">
-                  Guardar
-                </button>
-                <button 
-                  type="button" 
-                  className="btn-cancelar"
-                  onClick={handleCancel}
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
+                
+                <div className="form-group">
+                  <label htmlFor="authors">Autores</label>
+                  <input
+                    type="text"
+                    id="authors"
+                    value={libro.authors?.map(author => author.nameAuthor || author.name).join(', ') || 'No hay autores'}
+                    className="form-control"
+                    disabled
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="category">Categoría</label>
+                  <input
+                    type="text"
+                    id="category"
+                    value={libro.category ? (libro.category.nameCategory || libro.category.name) : 'Sin categoría'}
+                    className="form-control"
+                    disabled
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="editorial">Editorial</label>
+                  <input
+                    type="text"
+                    id="editorial"
+                    value={libro.editorial ? (libro.editorial.nameEditorial || libro.editorial.name) : 'Sin editorial'}
+                    className="form-control"
+                    disabled
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="publishedDate">Año de Publicación</label>
+                  <input
+                    type="number"
+                    id="publishedDate"
+                    value={libro.publishedDate}
+                    className="form-control"
+                    disabled
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="state">Estado</label>
+                  <input
+                    type="text"
+                    id="state"
+                    value={libro.state === 'DISPONIBLE' ? 'Disponible' : 'No Disponible'}
+                    className="form-control"
+                    disabled
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="stock">Stock <span className="required">*</span></label>
+                  <input
+                    type="number"
+                    id="stock"
+                    name="stock"
+                    value={libro.stock}
+                    onChange={(e) => setLibro({ ...libro, stock: e.target.value })}
+                    className="form-control"
+                    min="0"
+                    required
+                  />
+                </div>
+
+                <div className="form-actions">
+                  <button 
+                    type="submit" 
+                    className="btn-guardar"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Guardando...' : 'Guardar'}
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn-cancel"
+                    onClick={handleCancel}
+                    disabled={isSaving}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="error-message">No se encontró el libro</div>
+            )}
           </div>
         </div>
       </div>
